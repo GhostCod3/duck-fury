@@ -1,0 +1,14 @@
+{
+  "environment": "GitHub Actions headless Chromium; not physical Android",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+  "viewport": [
+    1440,
+    1050
+  ],
+  "samples": 120,
+  "unit": "milliseconds per requestAnimationFrame interval",
+  "mean": 16.666666666666668,
+  "p50": 16.699999999999818,
+  "p95": 16.799999999999955,
+  "max": 16.800000000000182
+}
