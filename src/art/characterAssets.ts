@@ -43,7 +43,7 @@ export function preloadCharacterAssets(scene: Phaser.Scene): void {
       const texture = scene.textures.get(key);
       const image = texture.getSourceImage() as HTMLImageElement | HTMLCanvasElement;
       if (!validSheetGrid(sheet, image.width, image.height) ||
-          Object.values(sheet.animations).some(clip => clip?.frames.some(frame => !texture.has(frame)))) {
+          Object.values(sheet.animations).some(clip => clip?.frames.some(frame => !texture.has(String(frame))))) {
         warn(`${id}: decoded sheet dimensions or frames do not match the manifest; using procedural fallback.`);
         scene.textures.remove(key);
         continue;
