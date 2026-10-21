@@ -41,6 +41,10 @@ export class CharacterView extends Phaser.GameObjects.Container {
   lockContact(point: Vec): void { this.rig?.rigState.lockContact(point); }
   beginKnockout(pose: RigSnapshot): void { this.rig?.rigState.beginKnockout(pose); }
   hurtAnchor(): Vec { return this.rig?.rigState.hurtAnchor() ?? { x: this.x, y: this.y - 91 }; }
+  telegraphAnchor(): Vec {
+    const state = this.rig?.rigState;
+    return state ? state.worldPoint({ x: state.pose.neck.x, y: state.pose.neck.y - 100 }) : { x: this.x, y: this.y - 185 };
+  }
   get knockoutComplete(): boolean { return this.rig?.rigState.complete ?? true; }
 
   renderPose(pose: CharacterPose): void {

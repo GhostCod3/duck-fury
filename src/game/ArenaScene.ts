@@ -194,7 +194,8 @@ export class ArenaScene extends Phaser.Scene {
       view.renderPose({facing:fighter.facing,moving:fighter.moving,attack:fighter.attack,progress:fighter.attackProgress,hurt:fighter.hurt,dead:fighter.dead,time});
     }
     const enemy = this.world.enemy;
-    this.warning.setPosition(enemy.x, enemy.y - 185).setVisible(enemy.attack === 'enemy' && enemy.attackProgress < .65 && !enemy.dead);
+    const warning = this.enemyView.telegraphAnchor();
+    this.warning.setPosition(warning.x, warning.y).setVisible(enemy.attack === 'enemy' && enemy.attackProgress < .65 && !enemy.dead);
   }
 
   private handleEvent(event: CombatEvent): void {
@@ -263,12 +264,12 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** Development-only fixtures use the real scene, controls, events, and CombatWorld. */
-  setupForVerification(options: { left?: boolean; miss?: boolean; lethal?: boolean; edge?: boolean } = {}): void {
+  setupForVerification(options: { left?: boolean; miss?: boolean; lethal?: boolean; edge?: boolean; spaced?: boolean } = {}): void {
     if (!import.meta.env.DEV) throw new Error('Verification fixtures are development-only');
     this.restart();
     const player = this.world.player, enemy = this.world.enemy;
-    player.x = options.edge ? 2300 : options.left ? 650 : 540;
-    enemy.x = options.edge ? 2400 : options.miss ? 1300 : options.left ? 580 : 610;
+    player.x = options.edge ? 2300 : options.spaced && options.left ? 800 : options.left ? 650 : 540;
+    enemy.x = options.edge ? 2400 : options.miss ? 1300 : options.spaced ? options.left ? 540 : 800 : options.left ? 580 : 610;
     player.facing = options.left ? -1 : 1; enemy.facing = options.left ? 1 : -1;
     player.y = enemy.y = 560;
     if (options.lethal) enemy.hp = 1;

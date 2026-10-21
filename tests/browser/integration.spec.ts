@@ -24,6 +24,22 @@ async function capture(page: Page, name: string) {
   const jpeg = await page.locator('#game-canvas canvas').evaluate(node => (node as HTMLCanvasElement).toDataURL('image/jpeg', .88));
   writeFileSync(`qa-captures/${name}-canvas.jpg`, Buffer.from(jpeg.split(',')[1], 'base64'));
 }
+async function recordHeadlessFramePacing(page: Page) {
+  const result = await page.evaluate(() => new Promise<object>(resolve => {
+    const intervals: number[] = []; let previous = 0;
+    const sample = (now: number) => {
+      if (previous) intervals.push(now - previous); previous = now;
+      if (intervals.length < 120) { requestAnimationFrame(sample); return; }
+      const sorted = [...intervals].sort((a, b) => a - b);
+      resolve({ environment: 'GitHub Actions headless Chromium; not physical Android', userAgent: navigator.userAgent,
+        viewport: [innerWidth, innerHeight], samples: intervals.length, unit: 'milliseconds per requestAnimationFrame interval',
+        mean: intervals.reduce((a, b) => a + b) / intervals.length, p50: sorted[60], p95: sorted[114], max: sorted[119] });
+    };
+    requestAnimationFrame(sample);
+  }));
+  mkdirSync('qa-captures', { recursive: true });
+  writeFileSync('qa-captures/headless-frame-pacing.json', JSON.stringify(result, null, 2));
+}
 
 test('ready idle, upright anchors, independent timing, both facings, and pause', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
@@ -31,6 +47,7 @@ test('ready idle, upright anchors, independent timing, both facings, and pause',
   const first = await snapshot(page);
   expect(first.views.player.renderer).toBe('rig'); expect(first.views.enemy.renderer).toBe('rig');
   expect(first.resources.variants).toBe(64);
+  await recordHeadlessFramePacing(page);
   await page.waitForTimeout(800); const idle = await snapshot(page);
   expect(idle.time).toBe(0); expect(idle.player.x).toBe(first.player.x); expect(idle.enemy.x).toBe(first.enemy.x);
   expect(idle.views.player.pose.front.x).toBe(274); expect(idle.views.player.pose.front.y).toBe(354);
@@ -38,10 +55,10 @@ test('ready idle, upright anchors, independent timing, both facings, and pause',
   expect(idle.views.player.pose.headAngle).not.toBe(first.views.player.pose.headAngle);
   expect(idle.views.player.pose.headAngle).not.toBe(idle.views.enemy.pose.headAngle);
   await capture(page, 'after-ready-idle');
-  await setup(page); await capture(page, 'after-facing-right'); await page.keyboard.press('Escape');
+  await setup(page, { spaced: true }); await page.keyboard.press('Escape'); await capture(page, 'after-facing-right');
   const paused = await snapshot(page); await page.waitForTimeout(250);
   expect((await snapshot(page)).views).toEqual(paused.views); expect((await snapshot(page)).time).toBe(paused.time);
-  await page.keyboard.press('Escape'); await setup(page, { left: true });
+  await page.keyboard.press('Escape'); await setup(page, { left: true, spaced: true }); await page.keyboard.press('Escape');
   await capture(page, 'after-facing-left');
   await page.locator('#help-button').click(); await expect(page.locator('#help-dialog')).toBeVisible();
   await page.locator('#help-done').click(); await expect(page.locator('#help-dialog')).toBeHidden();
@@ -125,6 +142,8 @@ test('left-facing kick, enemy victim isolation, and stationary decals through ca
   state = await snapshot(page); expect(state.cameraX).toBeGreaterThan(before.cameraX);
   expect(state.blood.stains.some(q => q.x === stain.x && q.y === stain.y)).toBe(true);
   await setup(page);
+  await page.waitForFunction(() => { const enemy = (window as any).__duckFury.snapshot().enemy; return enemy.attack === 'enemy' && enemy.attackProgress > .2; });
+  await page.keyboard.press('Escape'); await capture(page, 'after-enemy-windup'); await page.keyboard.press('Escape');
   await page.waitForFunction(() => (window as any).__duckFury.snapshot().player.hp === 88);
   await page.keyboard.press('Escape'); state = await snapshot(page);
   expect(state.views.player.wounds).toBe(1); expect(state.views.enemy.wounds).toBe(0);
