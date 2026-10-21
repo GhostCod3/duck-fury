@@ -89,9 +89,15 @@ The world is 2,600 units wide. Walkable lanes span Y=460–635, with depth sorti
 
 The automated tests cover normalized movement and bounds, frame-stall handling, attack direction and lanes, buffered three-hit combos, damage once per attack, combo timeout, kick knockback, AI pursuit and telegraphing, lane dodges, both encounter outcomes, and fighter separation at arena edges. Browser and Android interaction checks complement these simulation tests.
 
-## Optional hand-drawn character sprites
+## Approved segmented character artwork
 
-The renderer supports transparent sprite sheets with idle, walk, attack/combo, hurt, and death states. It currently ships with an empty character manifest and continues to display the original procedural ducks. **Final hand-drawn character artwork is not included.**
+The supplied approved wasteland character parts and painted scrapyard are integrated through a dedicated segmented renderer. Rook uses the original parts, and Dustjaw uses the approved cached blue/green variant of the same rig. The renderer preserves the upright idle, merged head/collar, articulated limbs and boots, spring scarf, victim-local wounds, and complete constant-size knockout. Combat remains authoritative in `CombatWorld`.
+
+See [the segmented integration notes](docs/approved-rig/INTEGRATION.md) for asset provenance, rendering/fallback behavior, fixed-step timing, effects, and PR verification commands. This integration uses the supplied segmented artwork; it does not pretend that separate final frame-sheet artwork has been created.
+
+## Optional frame-based character sprites
+
+The existing transparent frame-sheet renderer and validation are preserved as a fallback beneath the approved segmented renderer. Its character manifest is still empty; no final frame-sheet assets are included. If the segmented rig cannot load, a complete valid sheet is selected when configured, otherwise the procedural ducks remain available.
 
 See [the character sprite contract](docs/character-sprites.md) for Rook and Dustjaw's art direction, required frames, cell dimensions, ground anchors, a complete manifest example, asset loading/fallback behavior, and Android acceptance checks. Adding complete, validated packs in `public/assets/characters/` enables the sprite renderer without changing combat or controls.
 

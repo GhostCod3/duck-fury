@@ -1,0 +1,53 @@
+name: Verify approved rig integration
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rig-verification-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Tests, production build, and Chromium verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install dependencies without requiring a lockfile
+        run: npm install --no-audit --no-fund
+      - name: Run regression tests
+        run: npm test
+      - name: Build production bundle
+        run: npm run build
+      - name: Check out the inspected baseline for before screenshots
+        uses: actions/checkout@v5
+        with:
+          ref: a2d111c0033b3ed92036bed8234f435f08ac8ab3
+          path: .qa-baseline
+      - name: Install baseline dependencies
+        run: npm --prefix .qa-baseline install --no-audit --no-fund
+      - name: Install headless Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verify browser, mobile pointers, assets, and capture comparisons
+        env:
+          QA_BASELINE: '1'
+        run: npm run test:browser
+      - name: Preserve screenshots, traces, and browser report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rig-integration-verification
+          path: |
+            qa-captures/
+            playwright-report/
+            test-results/
+          retention-days: 14

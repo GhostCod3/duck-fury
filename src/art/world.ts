@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { createPaintedWorld, type WorldPresentation } from './PaintedWorld';
 
 const WORLD_WIDTH = 2600;
 const C = {
@@ -14,7 +15,14 @@ const C = {
 };
 
 /** All scenery is generated with Canvas/WebGL drawing commands, no art files. */
-export function createWorld(scene: Phaser.Scene): void {
+export function createWorld(scene: Phaser.Scene): WorldPresentation {
+  const painted = createPaintedWorld(scene);
+  if (painted) return painted;
+  createProceduralWorld(scene);
+  return { update: () => {} };
+}
+
+function createProceduralWorld(scene: Phaser.Scene): void {
   const polygon = (g: Phaser.GameObjects.Graphics, points: number[], color: number, outline = false) => {
     g.fillStyle(color).lineStyle(3, C.ink, 1).beginPath().moveTo(points[0], points[1]);
     for (let i = 2; i < points.length; i += 2) g.lineTo(points[i], points[i + 1]);

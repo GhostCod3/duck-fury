@@ -21,7 +21,8 @@ if (import.meta.env.DEV) {
   Object.defineProperty(window, '__duckFury', {value: {
     snapshot: () => {
       const scene = game.scene.getScene('arena') as ArenaScene;
-      return {mode:scene.mode,status:scene.world.status,player:{...scene.world.player},enemy:{...scene.world.enemy},combo:scene.world.combo,time:scene.world.time,cameraX:scene.cameras.main.scrollX};
+      return {mode:scene.mode,status:scene.world.status,player:{...scene.world.player},enemy:{...scene.world.enemy},combo:scene.world.combo,time:scene.world.time,cameraX:scene.cameras.main.scrollX,...scene.verificationSnapshot()};
     },
+    setup: (options: { left?: boolean; miss?: boolean; lethal?: boolean; edge?: boolean }) => (game.scene.getScene('arena') as ArenaScene).setupForVerification(options),
   }});
 }

@@ -2,6 +2,10 @@ import Phaser from 'phaser';
 import { DuckView } from './DuckView';
 import { characterTextureKey, getCharacterSheet } from './characterAssets';
 import { CharacterAnimation, type CharacterId, type CharacterPose, type CharacterSheet } from './characterManifest';
+import { getRigAssets } from './rig/rigAssets';
+import { RigCharacterView } from './rig/RigCharacterView';
+import type { RigSnapshot } from './rig/RigState';
+import type { Vec } from './rig/RigMath';
 
 /** Ground-anchored rendering only. Combat positions, ranges, and collisions stay in CombatWorld. */
 export class CharacterView extends Phaser.GameObjects.Container {
@@ -10,6 +14,7 @@ export class CharacterView extends Phaser.GameObjects.Container {
   private readonly shadow?: Phaser.GameObjects.Graphics;
   private readonly sheet?: CharacterSheet;
   private readonly animation = new CharacterAnimation();
+  readonly rig?: RigCharacterView;
 
   constructor(scene: Phaser.Scene, x: number, y: number, id: CharacterId) {
     super(scene, x, y);
@@ -23,9 +28,26 @@ export class CharacterView extends Phaser.GameObjects.Container {
       this.sprite.setOrigin(this.sheet.origin.x, this.sheet.origin.y).setScale(this.sheet.scale);
       this.add([this.shadow, this.sprite]);
     }
+    const rigAssets = getRigAssets(scene);
+    if (rigAssets) {
+      this.rig = new RigCharacterView(scene, id === 'dustjaw', rigAssets, { x, y, facing: id === 'rook' ? 1 : -1, moving: false, attack: null, progress: 0, hurt: false, dead: false, time: 0 });
+      this.add(this.rig);
+    }
   }
 
+  advancePresentation(dt: number, pose: RigSnapshot, target?: Vec): void { this.rig?.rigState.advance(dt, pose, target); }
+  resetPresentation(pose: RigSnapshot): void { this.rig?.rigState.reset(pose); }
+  onHit(heavy: boolean): void { this.rig?.rigState.addWound(heavy); }
+  lockContact(point: Vec): void { this.rig?.rigState.lockContact(point); }
+  beginKnockout(pose: RigSnapshot): void { this.rig?.rigState.beginKnockout(pose); }
+  hurtAnchor(): Vec { return this.rig?.rigState.hurtAnchor() ?? { x: this.x, y: this.y - 91 }; }
+  get knockoutComplete(): boolean { return this.rig?.rigState.complete ?? true; }
+
   renderPose(pose: CharacterPose): void {
+    if (this.rig) {
+      this.fallback.setVisible(false); this.sprite?.setVisible(false); this.shadow?.setVisible(false);
+      return;
+    }
     const frame = this.sheet ? this.animation.frame(this.sheet, pose) : undefined;
     const useSprite = frame !== undefined && this.sprite !== undefined;
     this.fallback.setVisible(!useSprite);
