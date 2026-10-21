@@ -55,9 +55,12 @@ test('authoritative hits, misses, combo buffering, victim wounds, complete KO, a
   await page.keyboard.press('Escape'); state = await snapshot(page);
   expect(state.views.enemy.wounds).toBe(1); expect(state.views.player.wounds).toBe(0);
   expect(state.blood.droplets.length).toBeGreaterThan(0); await capture(page, 'after-hit');
-  await setup(page); await page.keyboard.press('j'); await page.waitForTimeout(100);
-  await page.keyboard.press('j'); await page.waitForTimeout(260); await page.keyboard.press('j');
-  await page.waitForFunction(() => (window as any).__duckFury.snapshot().enemy.hp === 65);
+  await setup(page); await page.keyboard.press('j');
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().player.attack === 'punch1');
+  await page.keyboard.press('j');
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().player.attack === 'punch2');
+  await page.keyboard.press('j');
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().enemy.hp === 65, undefined, { timeout: 4000 });
   await setup(page, { lethal: true }); await page.keyboard.press('j');
   await page.waitForFunction(() => (window as any).__duckFury.snapshot().status === 'won');
   const falling = await snapshot(page); expect(falling.views.enemy.complete).toBe(false);
