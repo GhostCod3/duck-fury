@@ -190,7 +190,10 @@ export class ArenaScene extends Phaser.Scene {
 
   private paintFighters(time: number): void {
     for (const [fighter, view] of [[this.world.player, this.playerView], [this.world.enemy, this.enemyView]] as const) {
-      view.setPosition(fighter.x, fighter.y).setDepth(fighter.y);
+      const other = fighter.id === 'player' ? this.world.enemy : this.world.player;
+      // Approved reference order: within a nearly identical lane, keep the active strike visible.
+      const strikingInFront = fighter.attack && !other.attack && Math.abs(fighter.y - other.y) <= 3;
+      view.setPosition(fighter.x, fighter.y).setDepth(strikingInFront ? Math.max(fighter.y, other.y) + .01 : fighter.y);
       view.renderPose({facing:fighter.facing,moving:fighter.moving,attack:fighter.attack,progress:fighter.attackProgress,hurt:fighter.hurt,dead:fighter.dead,time});
     }
     const enemy = this.world.enemy;

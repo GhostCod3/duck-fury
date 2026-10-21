@@ -6,3 +6,4 @@ test-results/
 .qa-baseline/
 playwright-report/
 qa-captures/
+tests/fixtures/reference/assets

@@ -11,5 +11,6 @@ export default defineConfig({
     { command: 'npm run dev -- --host 127.0.0.1 --port 5173', url: 'http://127.0.0.1:5173/duck-fury/', reuseExistingServer: !process.env.CI },
     { command: 'npm run preview -- --host 127.0.0.1 --port 4173', url: 'http://127.0.0.1:4173/duck-fury/', reuseExistingServer: !process.env.CI },
     ...(process.env.QA_BASELINE ? [{ command: 'npm --prefix .qa-baseline run dev -- --host 127.0.0.1 --port 5174', url: 'http://127.0.0.1:5174/duck-fury/', reuseExistingServer: !process.env.CI }] : []),
+    ...(process.env.QA_REFERENCE ? [{ command: 'python3 -m http.server 8000 --bind 127.0.0.1 --directory tests/fixtures', url: 'http://127.0.0.1:8000/reference/', reuseExistingServer: !process.env.CI }] : []),
   ],
 });

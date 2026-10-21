@@ -37,9 +37,12 @@ jobs:
         run: npm --prefix .qa-baseline install --no-audit --no-fund
       - name: Install headless Chromium
         run: npx playwright install --with-deps chromium
+      - name: Reuse approved assets for the isolated standalone reference
+        run: ln -s ../../../public/assets tests/fixtures/reference/assets
       - name: Verify browser, mobile pointers, assets, and capture comparisons
         env:
           QA_BASELINE: '1'
+          QA_REFERENCE: '1'
         run: npm run test:browser
       - name: Preserve before and after screenshots separately
         if: always()
