@@ -50,9 +50,13 @@ The layout scales a landscape arena into the available viewport and includes tou
 
 ## Static deployment
 
-Run `npm run build`, then upload the **contents of `dist/`** to a static web host. The output includes `index.html` and bundled assets. Vite uses `base: './'`, so generated asset references are relative and can be served from a site subdirectory. This prototype has no backend, account service, database, or server-side routing requirement.
+The `.github/workflows/deploy.yml` workflow runs on pushes to `main` and can also be started manually from GitHub Actions. It uses Node.js 24, runs `npm install`, `npm test`, and `npm run build`, then uploads and deploys `dist/` using the official GitHub Pages Actions. Because no `package-lock.json` is committed, installation uses `npm install` without lockfile-based dependency caching.
 
-Serve the build over HTTP or HTTPS; opening `dist/index.html` with a `file://` URL is not the supported launch path. `npm run preview` is useful for checking the built files locally. Deployment credentials and hosting configuration belong to the chosen host; this repository does not publish itself automatically.
+In the repository's **Settings → Pages**, select **GitHub Actions** as the build and deployment source. After a successful deployment, open `https://ghostcod3.github.io/duck-fury/` in Android Chrome and turn the phone to landscape; no development computer is required to play the hosted game.
+
+Vite uses `base: '/duck-fury/'` to match this GitHub Pages project URL. For another host or URL prefix, adjust the base before running `npm run build`, then upload the **contents of `dist/`**. This prototype has no backend, account service, database, or server-side routing requirement.
+
+Serve the build over HTTP or HTTPS; opening `dist/index.html` with a `file://` URL is not the supported launch path. `npm run preview` is useful for checking the built files locally; with this base, open the printed host URL followed by `/duck-fury/`.
 
 ## Project structure
 
@@ -64,7 +68,8 @@ src/art/DuckView.ts         Procedural duck character drawing and combat poses
 src/art/world.ts            Procedural gas station, desert, and parallax scenery
 src/game/combat.ts          Pure TypeScript movement, combat, enemy AI, and encounter state
 tests/combat.test.ts        Deterministic gameplay tests without a browser
-vite.config.ts             Relative asset base and build configuration
+vite.config.ts             GitHub Pages asset base and build configuration
+.github/workflows/deploy.yml Automated tests, production build, and Pages deployment
 ```
 
 `CombatWorld` is independent of Phaser. Create a new instance for a fresh encounter and call:
