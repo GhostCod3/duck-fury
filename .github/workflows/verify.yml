@@ -78,7 +78,7 @@ jobs:
             const fs = require('node:fs');
             const owner = context.repo.owner, repo = context.repo.repo;
             const branch = `codex/rig-evidence-pr-${context.issue.number}`;
-            const names = fs.readdirSync('captures').filter(name => name.endsWith('-canvas.png') || name === 'after-mobile-landscape.png');
+            const names = fs.readdirSync('captures').filter(name => name.endsWith('-canvas.png') || name.endsWith('-canvas.jpg') || name === 'after-mobile-landscape.png');
             if (!names.length) throw new Error('No real browser captures were produced');
             let parent = context.payload.pull_request.head.sha, existing = false;
             try {

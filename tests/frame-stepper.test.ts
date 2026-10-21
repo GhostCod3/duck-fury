@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { FrameStepper, FIXED_STEP } from '../src/game/FrameStepper.ts';
 import { CombatWorld, type CombatInput } from '../src/game/combat.ts';
+import { RigState, type RigSnapshot } from '../src/art/rig/RigState.ts';
 const idle: CombatInput = { x: 0, y: 0, punch: false, kick: false };
 
 test('15, 30, and 60 render FPS produce the same real-time simulation and movement', () => {
@@ -11,6 +12,26 @@ test('15, 30, and 60 render FPS produce the same real-time simulation and moveme
     return [world.time, world.player.x];
   });
   for (const [time, x] of results) { assert.ok(Math.abs(time - 1) < 1e-9); assert.ok(Math.abs(x - 530) < 1e-9); }
+});
+
+test('15, 30, and 60 FPS drive identical idle, scarf, walking, and KO presentation clocks', () => {
+  const results = [15, 30, 60].map(hz => {
+    const clock = new FrameStepper();
+    const pose: RigSnapshot = { x: 540, y: 560, facing: 1, moving: false, attack: null, progress: 0, hurt: false, dead: false, time: 0 };
+    const rig = new RigState(false, pose);
+    for (let frame = 0; frame < hz * 3; frame++) {
+      clock.advance(1 / hz, idle, dt => {
+        const walking = frame >= hz && frame < hz * 2;
+        pose.moving = walking;
+        if (walking) pose.x += 210 * dt;
+        if (frame >= hz * 2) pose.dead = true;
+        rig.advance(dt, pose);
+      });
+    }
+    return { pose: rig.pose, spring: rig.spring, idleTime: rig.idleTime, time: rig.time, scale: rig.scale, complete: rig.complete };
+  });
+  assert.deepEqual(results[0], results[1]); assert.deepEqual(results[1], results[2]);
+  assert.equal(results[0].complete, true);
 });
 
 test('one press is consumed once across eight substeps, with held movement on every substep', () => {

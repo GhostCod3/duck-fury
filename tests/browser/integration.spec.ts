@@ -21,6 +21,8 @@ async function capture(page: Page, name: string) {
   await page.locator('#game-frame').screenshot({ path: `qa-captures/${name}.png` });
   const canvas = await page.locator('#game-canvas canvas').evaluate(node => (node as HTMLCanvasElement).toDataURL('image/png'));
   writeFileSync(`qa-captures/${name}-canvas.png`, Buffer.from(canvas.split(',')[1], 'base64'));
+  const jpeg = await page.locator('#game-canvas canvas').evaluate(node => (node as HTMLCanvasElement).toDataURL('image/jpeg', .88));
+  writeFileSync(`qa-captures/${name}-canvas.jpg`, Buffer.from(jpeg.split(',')[1], 'base64'));
 }
 
 test('ready idle, upright anchors, independent timing, both facings, and pause', async ({ page }) => {
@@ -97,6 +99,11 @@ test('landscape mobile multitouch, cancellation, rotation, sound and visibility 
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
   await page.waitForTimeout(450); const released = await snapshot(page); await page.waitForTimeout(150);
   expect((await snapshot(page)).player.x).toBe(released.player.x);
+  const diagonal = { x: pad.x + pad.width * .78, y: pad.y + pad.height * .22, id: 3 };
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [diagonal] });
+  await page.waitForTimeout(150);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  const moved = await snapshot(page); expect(moved.player.x).toBeGreaterThan(released.player.x); expect(moved.player.y).toBeLessThan(released.player.y);
   await page.locator('#sound-button').tap(); await expect(page.locator('#sound-button')).toHaveAttribute('aria-label', 'Enable sound');
   await capture(page, 'after-mobile-landscape');
   await page.setViewportSize({ width: 412, height: 915 }); await expect(page.locator('.rotate-hint')).toBeVisible(); expect((await snapshot(page)).mode).toBe('paused');
@@ -104,6 +111,24 @@ test('landscape mobile multitouch, cancellation, rotation, sound and visibility 
   await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
   expect((await snapshot(page)).mode).toBe('paused'); const paused = await snapshot(page); await page.waitForTimeout(200); expect((await snapshot(page)).time).toBe(paused.time);
   await context.close();
+});
+
+test('left-facing kick, enemy victim isolation, and stationary decals through camera movement', async ({ page }) => {
+  await ready(page); await setup(page, { left: true }); await page.keyboard.press('k');
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().enemy.hp === 97);
+  await page.keyboard.press('Escape'); let state = await snapshot(page);
+  expect(state.views.enemy.wounds).toBe(2); expect(state.views.player.wounds).toBe(0);
+  await capture(page, 'after-kick-left'); await page.keyboard.press('Escape');
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().blood.stains.length > 0);
+  const before = await snapshot(page), stain = before.blood.stains[0];
+  await page.keyboard.down('d'); await page.waitForTimeout(500); await page.keyboard.up('d');
+  state = await snapshot(page); expect(state.cameraX).toBeGreaterThan(before.cameraX);
+  expect(state.blood.stains.some(q => q.x === stain.x && q.y === stain.y)).toBe(true);
+  await setup(page);
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().player.hp === 88);
+  await page.keyboard.press('Escape'); state = await snapshot(page);
+  expect(state.views.player.wounds).toBe(1); expect(state.views.enemy.wounds).toBe(0);
+  await capture(page, 'after-enemy-hit');
 });
 
 test('production prefix, image MIME types, no development hooks, and graceful rig fallback', async ({ page, browser }) => {

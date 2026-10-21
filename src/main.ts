@@ -16,7 +16,7 @@ const game = new Phaser.Game({
   scene: [ArenaScene],
 });
 
-// Read-only browser QA snapshot; available solely in Vite development mode.
+// Browser QA snapshots and setup fixtures; available solely in Vite development mode.
 if (import.meta.env.DEV) {
   Object.defineProperty(window, '__duckFury', {value: {
     snapshot: () => {
