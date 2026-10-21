@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { createWorld } from '../art/world';
-import { DuckView } from '../art/DuckView';
+import { CharacterView } from '../art/CharacterView';
+import { preloadCharacterAssets } from '../art/characterAssets';
 import { CombatWorld, WORLD_WIDTH, type CombatEvent } from './combat';
 import { Controls } from './Controls';
 import { Sound } from './Sound';
@@ -13,8 +14,8 @@ export class ArenaScene extends Phaser.Scene {
   mode: PlayMode = 'ready';
   controls!: Controls;
   readonly effects = new Sound();
-  private playerView!: DuckView;
-  private enemyView!: DuckView;
+  private playerView!: CharacterView;
+  private enemyView!: CharacterView;
   private warning!: Phaser.GameObjects.Text;
   private hitStop = 0;
   private comboUntil = 0;
@@ -23,10 +24,14 @@ export class ArenaScene extends Phaser.Scene {
 
   constructor() { super('arena'); }
 
+  preload(): void {
+    preloadCharacterAssets(this);
+  }
+
   create(): void {
     createWorld(this);
-    this.playerView = new DuckView(this, this.world.player.x, this.world.player.y, false);
-    this.enemyView = new DuckView(this, this.world.enemy.x, this.world.enemy.y, true);
+    this.playerView = new CharacterView(this, this.world.player.x, this.world.player.y, 'rook');
+    this.enemyView = new CharacterView(this, this.world.enemy.x, this.world.enemy.y, 'dustjaw');
     this.warning = this.add.text(0, 0, '!', {fontFamily:'Arial',fontSize:'28px',fontStyle:'bold',color:'#f3ba59',stroke:'#343a2b',strokeThickness:5}).setOrigin(.5).setDepth(900).setVisible(false);
     this.cameras.main.setBounds(0, 0, WORLD_WIDTH, 720);
     this.controls = new Controls(() => this.togglePause(), () => this.enter());
@@ -125,7 +130,8 @@ export class ArenaScene extends Phaser.Scene {
     }
     if (this.world.status !== 'playing') {
       this.endDelay += dt;
-      this.paintFighters(this.world.time * 1000);
+      // The simulation has ended; allow only the visual death clip to finish before the overlay.
+      this.paintFighters((this.world.time + this.endDelay) * 1000);
       if (this.endDelay > .85) this.finish();
       return;
     }

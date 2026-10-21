@@ -89,6 +89,12 @@ The world is 2,600 units wide. Walkable lanes span Y=460–635, with depth sorti
 
 The automated tests cover normalized movement and bounds, frame-stall handling, attack direction and lanes, buffered three-hit combos, damage once per attack, combo timeout, kick knockback, AI pursuit and telegraphing, lane dodges, both encounter outcomes, and fighter separation at arena edges. Browser and Android interaction checks complement these simulation tests.
 
+## Optional hand-drawn character sprites
+
+The renderer supports transparent sprite sheets with idle, walk, attack/combo, hurt, and death states. It currently ships with an empty character manifest and continues to display the original procedural ducks. **Final hand-drawn character artwork is not included.**
+
+See [the character sprite contract](docs/character-sprites.md) for Rook and Dustjaw's art direction, required frames, cell dimensions, ground anchors, a complete manifest example, asset loading/fallback behavior, and Android acceptance checks. Adding complete, validated packs in `public/assets/characters/` enables the sprite renderer without changing combat or controls.
+
 ## Prototype scope
 
 This is one small, complete encounter with one enemy, one environment, a scrolling camera, and replay. Artwork uses original procedural placeholders and pose animation rather than a finished hand-drawn sprite library. There are no additional levels, enemy waves, pickups, persistent progress, multiplayer, or offline installation features. Balance and animation are intentionally kept compact so the combat loop can be tested and extended.
