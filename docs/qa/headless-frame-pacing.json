@@ -7,7 +7,7 @@
   ],
   "samples": 120,
   "unit": "milliseconds per requestAnimationFrame interval",
-  "mean": 16.666666666666668,
+  "mean": 16.665833333333335,
   "p50": 16.699999999999818,
   "p95": 16.799999999999955,
   "max": 16.800000000000182
