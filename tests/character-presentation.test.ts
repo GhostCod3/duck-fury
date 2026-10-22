@@ -39,6 +39,14 @@ test('normal enemy approach still attacks and deals exactly the same damage with
   assert.ok(hit, 'enemy must close the actual initial distance and hit');
 });
 
+test('fighters passing on separate lanes cross continuously without swapping separated roots', () => {
+  const player = { x: 540, y: 560, facing: 1 as const };
+  const before = presentationPositions(player, { x: 539.99, y: 584 });
+  const after = presentationPositions(player, { x: 540.01, y: 584 });
+  assert.ok(Math.abs(before.player.x - after.player.x) < .1);
+  assert.ok(Math.abs(before.enemy.x - after.enemy.x) < .1);
+});
+
 test('the real 44-unit collision limit remains reachable and the enemy can hit there', () => {
   for (const facing of [1, -1] as const) {
     const world = new CombatWorld(); world.player.x = 540; world.enemy.x = 540 + facing * 70;

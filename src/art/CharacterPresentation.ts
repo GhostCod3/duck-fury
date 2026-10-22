@@ -6,9 +6,12 @@ import type { RigSnapshot } from './rig/RigState.ts';
 export const CONTACT_FOOTPRINT = 128;
 export function presentationPositions(player: Pick<Fighter, 'x' | 'y' | 'facing'>, enemy: Pick<Fighter, 'x' | 'y'>): Record<'player' | 'enemy', Vec> {
   const lane = Math.abs(player.y - enemy.y);
-  const weight = 1 - smooth((lane - LANE_TOLERANCE) / 32);
-  const distance = CONTACT_FOOTPRINT * (depthScale(player.y) + depthScale(enemy.y)) / 2 * weight;
   const gap = Math.abs(enemy.x - player.x);
+  // CombatWorld allows passing once lanes differ by more than 23 units.
+  // Ease away near an actual crossing instead of swapping two separated roots.
+  const passing = lane > 23 ? smooth(gap / 44) : 1;
+  const weight = (1 - smooth((lane - LANE_TOLERANCE) / 32)) * passing;
+  const distance = CONTACT_FOOTPRINT * (depthScale(player.y) + depthScale(enemy.y)) / 2 * weight;
   if (gap >= distance) return { player: { x: player.x, y: player.y }, enemy: { x: enemy.x, y: enemy.y } };
   const sign = Math.sign(enemy.x - player.x) || player.facing;
   const extra = (distance - gap) / 2;
