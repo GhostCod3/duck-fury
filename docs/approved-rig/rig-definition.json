@@ -1,0 +1,237 @@
+{
+  "schema": "duck-fury-segmented-rig-handoff-v1",
+  "reference": {
+    "viewport": [
+      720,
+      440
+    ],
+    "worldWidth": 2400,
+    "laneY": [
+      342,
+      406
+    ],
+    "actorRoot": [
+      250,
+      382
+    ],
+    "armSegments": [
+      55,
+      55
+    ],
+    "legSegments": [
+      65,
+      65
+    ],
+    "standingHipY": 228,
+    "walkingHipY": 242,
+    "stanceFormula": "242 - 14 * (1 - gait)",
+    "idleAnkles": {
+      "back": [
+        226,
+        354
+      ],
+      "front": [
+        274,
+        354
+      ]
+    },
+    "playbackRate": 1.3,
+    "fixedStep": 0.008333333333333333,
+    "knockoutTimelineEnd": 1.25
+  },
+  "assets": {
+    "head": {
+      "path": "reference/assets/rig/head.webp",
+      "width": 290,
+      "height": 289,
+      "sha256": "5edcbe458ea323097384edcbc5228573c47eb261d6539986eb2c6d7792462701"
+    },
+    "torso": {
+      "path": "reference/assets/rig/torso.webp",
+      "width": 230,
+      "height": 290,
+      "sha256": "2b1d489f1e758fd845343c2155e9ef2180a1887ae70b9da7165a5fd878448fcd"
+    },
+    "upperArm": {
+      "path": "reference/assets/rig/upperArm.webp",
+      "width": 168,
+      "height": 272,
+      "sha256": "189eef870cc585222cc960e32e7afccbc3cc407dd6a433d492735269a61f114e"
+    },
+    "forearm": {
+      "path": "reference/assets/rig/forearm.webp",
+      "width": 235,
+      "height": 234,
+      "sha256": "337bccf5fd04157f3e76b58627b6e63c2eab498ac4061a7e3d50bb3ba926d4ae"
+    },
+    "farUpperArm": {
+      "path": "reference/assets/rig/farUpperArm.webp",
+      "width": 174,
+      "height": 270,
+      "sha256": "21d8bc04c78fb4c5a67024817a9ba83e2b49b1028fa0ed639c1631b9d3049f8e"
+    },
+    "farForearm": {
+      "path": "reference/assets/rig/farForearm.webp",
+      "width": 220,
+      "height": 252,
+      "sha256": "a55d43763753693337963eb5230ce07b24e4a9534fdecbaf3d22a0b6e2d36b31"
+    },
+    "thigh": {
+      "path": "reference/assets/rig/thigh.webp",
+      "width": 178,
+      "height": 290,
+      "sha256": "1593bab756a973a0c8b9cf8c754d1d2ec6745cea2998e9d1a589ae4391c32564"
+    },
+    "shin": {
+      "path": "reference/assets/rig/shin.webp",
+      "width": 198,
+      "height": 290,
+      "sha256": "216ce3cefe526375311143c18967beac4840ffe80546e8dfdaea7d136d58e048"
+    },
+    "farThigh": {
+      "path": "reference/assets/rig/farThigh.webp",
+      "width": 179,
+      "height": 290,
+      "sha256": "8aebdfc04b758323da2e861b8e17bd14b8d0e3bd13445b2b96bdaee5b894de8d"
+    },
+    "farShin": {
+      "path": "reference/assets/rig/farShin.webp",
+      "width": 212,
+      "height": 290,
+      "sha256": "7e79a49763dd0f1822f71f4d2b6ff6410d018df6c971602498c2093d657146a6"
+    },
+    "scarfTail": {
+      "path": "reference/assets/rig/scarfTail.webp",
+      "width": 235,
+      "height": 118,
+      "sha256": "7ee09c7cc19ae71118b8cfc5ab271eee0bc2ef09b54cdd50bb3635c944cefffa"
+    },
+    "headKO": {
+      "path": "reference/assets/rig/headKO.webp",
+      "width": 290,
+      "height": 290,
+      "sha256": "59984c9cc5a6aa56c68abdb189d187aa5fca4210fb62192a361ef5e1ec9918a3"
+    },
+    "panorama": {
+      "path": "reference/assets/world/scrap-road.webp",
+      "width": 2172,
+      "height": 724,
+      "sha256": "cd164347c9ba77ad3c116d9472fcce5570c6b7087236baf12495b09c7f176ec0"
+    }
+  },
+  "pivotsNormalized": {
+    "torso": [
+      0.64,
+      0.055,
+      0.48,
+      0.88
+    ],
+    "upperArm": [
+      0.49,
+      0.18,
+      0.55,
+      0.88
+    ],
+    "farUpperArm": [
+      0.48,
+      0.18,
+      0.59,
+      0.88
+    ],
+    "forearm": [
+      0.17,
+      0.15,
+      0.78,
+      0.79
+    ],
+    "farForearm": [
+      0.19,
+      0.15,
+      0.78,
+      0.79
+    ],
+    "thigh": [
+      0.43,
+      0.1,
+      0.59,
+      0.83
+    ],
+    "farThigh": [
+      0.43,
+      0.1,
+      0.59,
+      0.83
+    ],
+    "shin": [
+      0.42,
+      0.1,
+      0.42,
+      0.72
+    ],
+    "farShin": [
+      0.42,
+      0.1,
+      0.42,
+      0.72
+    ]
+  },
+  "head": {
+    "asset": "head",
+    "closedEyeAsset": "headKO",
+    "mergedCollar": true,
+    "rect": [
+      -42,
+      -65,
+      90,
+      104
+    ],
+    "originOffsetFromNeck": [
+      -4,
+      -10
+    ]
+  },
+  "shin": {
+    "legClip": [
+      0.34,
+      0.72
+    ],
+    "legPivotsOverride": [
+      0.42,
+      0.28,
+      0.42,
+      0.72
+    ],
+    "thickness": 0.71,
+    "bootCropStart": 0.59,
+    "bootAnchorFraction": [
+      0.42,
+      0.72
+    ]
+  },
+  "arms": {
+    "thickness": 1.18
+  },
+  "scarf": {
+    "length": 118,
+    "height": 44,
+    "segments": 16
+  },
+  "enemyVariant": {
+    "sharedParts": true,
+    "filter": "hue-rotate(170deg) saturate(.72) brightness(.92)"
+  },
+  "renderOrder": [
+    "scarf",
+    "farArm",
+    "farLeg",
+    "nearLeg",
+    "torso",
+    "head",
+    "nearArm"
+  ],
+  "notes": [
+    "This is a segmented-rig definition, NOT the existing repo character sprite-sheet manifest.",
+    "Use runtime/game.js as the authoritative implementation for overlaps, boot splitting, IK and KO.",
+    "Pixel dimensions and pivots describe the supplied image files; preserve them when packing an atlas."
+  ]
+}

@@ -1,0 +1,101 @@
+name: Verify approved rig integration
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rig-verification-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Tests, production build, and Chromium verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install dependencies without requiring a lockfile
+        run: npm install --no-audit --no-fund
+      - name: Run regression tests
+        run: npm test
+      - name: Build production bundle
+        run: npm run build
+      - name: Check out the inspected baseline for before screenshots
+        uses: actions/checkout@v5
+        with:
+          ref: a2d111c0033b3ed92036bed8234f435f08ac8ab3
+          path: .qa-baseline
+      - name: Install baseline dependencies
+        run: npm --prefix .qa-baseline install --no-audit --no-fund
+      - name: Install headless Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Reuse approved assets for the isolated standalone reference
+        run: ln -s ../../../public/assets tests/fixtures/reference/assets
+      - name: Verify browser, mobile pointers, assets, and capture comparisons
+        env:
+          QA_BASELINE: '1'
+          QA_REFERENCE: '1'
+        run: npm run test:browser
+      - name: Preserve before and after screenshots separately
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rig-comparison-screenshots
+          path: qa-captures/
+          retention-days: 14
+      - name: Preserve traces and browser report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rig-integration-verification
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  evidence:
+    name: Publish review screenshots to an evidence branch
+    needs: verify
+    if: always() && needs.verify.result != 'cancelled' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download comparison screenshots
+        uses: actions/download-artifact@v4
+        with:
+          name: rig-comparison-screenshots
+          path: captures
+      - name: Keep review images separate from the source PR and production branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs');
+            const owner = context.repo.owner, repo = context.repo.repo;
+            const branch = `codex/rig-evidence-pr-${context.issue.number}`;
+            const names = fs.readdirSync('captures').filter(name => name.endsWith('-canvas.png') || name.endsWith('-canvas.jpg') || name === 'after-mobile-landscape.png' || name === 'headless-frame-pacing.json');
+            if (!names.length) throw new Error('No real browser captures were produced');
+            let parent = context.payload.pull_request.head.sha, existing = false;
+            try {
+              parent = (await github.rest.git.getRef({owner, repo, ref: `heads/${branch}`})).data.object.sha;
+              existing = true;
+            } catch (error) { if (error.status !== 404) throw error; }
+            const baseTree = (await github.rest.git.getCommit({owner, repo, commit_sha: parent})).data.tree.sha;
+            const entries = [];
+            for (const name of names) {
+              const blob = await github.rest.git.createBlob({owner, repo, content: fs.readFileSync(`captures/${name}`).toString('base64'), encoding: 'base64'});
+              entries.push({path: `docs/qa/${name}`, mode: '100644', type: 'blob', sha: blob.data.sha});
+            }
+            const tree = await github.rest.git.createTree({owner, repo, base_tree: baseTree, tree: entries});
+            const commit = await github.rest.git.createCommit({owner, repo, message: `Capture PR #${context.issue.number} browser evidence for ${context.payload.pull_request.head.sha}`, tree: tree.data.sha, parents: [parent]});
+            if (existing) await github.rest.git.updateRef({owner, repo, ref: `heads/${branch}`, sha: commit.data.sha, force: false});
+            else await github.rest.git.createRef({owner, repo, ref: `refs/heads/${branch}`, sha: commit.data.sha});
+            core.summary.addHeading('Review images').addLink('Browser comparison captures', `https://github.com/${owner}/${repo}/tree/${branch}/docs/qa`).write();

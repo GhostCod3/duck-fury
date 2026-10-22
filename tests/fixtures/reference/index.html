@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>DUCK FURY — Approved rig reference</title>
+  <link rel="stylesheet" href="./reference.css">
+</head>
+<body>
+  <main>
+    <header><strong>DUCK FURY</strong><span>גרסת ייחוס מאושרת — עמידה מתוקנת</span></header>
+    <div id="rook-wasteland-stance" dir="rtl">
+  <div class="viz-row">
+    <div style="flex:1;min-width:120px"><div class="viz-row"><span>Rook</span><span data-hp="player" class="tabular-nums">100</span></div><div class="progress" role="progressbar" aria-label="החיים של Rook" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" data-health="player"><div class="progress-bar" style="width:100%"></div></div></div>
+    <div style="flex:1;min-width:120px"><div class="viz-row"><span>פושט שממה</span><span data-hp="enemy" class="tabular-nums">100</span></div><div class="progress" role="progressbar" aria-label="החיים של היריב" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" data-health="enemy"><div class="progress-bar" style="width:100%"></div></div></div>
+  </div>
+  <canvas aria-label="דרך הגרוטאות: זירת שממה עם גלילה ומצלמה עוקבת, תנועה בארבעה כיוונים וקרב מול פושט שממה" role="img" width="720" height="440" style="display:block;width:100%;margin-inline:auto;height:auto;touch-action:pan-y"></canvas>
+  <div class="viz-row">
+    <div dir="ltr" style="display:grid;grid-template-columns:repeat(3,auto);gap:4px;touch-action:none;user-select:none">
+      <button class="btn" type="button" data-dir="up" aria-label="למעלה" style="grid-column:2">↑</button>
+      <button class="btn" type="button" data-dir="left" aria-label="שמאלה" style="grid-column:1;grid-row:2">←</button>
+      <button class="btn" type="button" data-dir="down" aria-label="למטה" style="grid-column:2;grid-row:2">↓</button>
+      <button class="btn" type="button" data-dir="right" aria-label="ימינה" style="grid-column:3;grid-row:2">→</button>
+    </div>
+    <button class="btn btn-primary" type="button" data-action="punch">אגרוף</button>
+    <button class="btn" type="button" data-action="kick">בעיטה</button>
+  </div>
+  <div class="viz-controls">
+    <button class="btn" type="button" data-action="reset">סיבוב חדש</button>
+    <button class="btn" type="button" data-action="preview-ko">הדגם נפילה</button>
+    <label class="form-check"><input class="form-check-input" type="checkbox" data-action="bones"><span class="form-check-label">הצג שלד</span></label>
+    <span class="text-small">חצים / WASD · אגרוף J · בעיטה K</span>
+  </div>
+  <p class="text-small" data-status="main" aria-live="polite">טוענת חלקי דמות…</p>
+</div>
+
+  </main>
+  <script src="./runtime/assets.js"></script>
+  <script src="./runtime/game.js"></script>
+</body>
+</html>

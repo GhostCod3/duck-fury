@@ -54,6 +54,12 @@ const ATTACKS: Record<AttackKind, AttackSpec> = {
   enemy: { duration: 0.78, impact: 0.51, range: 98, damage: 12, knockback: 260 },
 };
 
+/** A detached read-only presentation contract; renderers cannot change combat balance. */
+export function getAttackPresentation(kind: AttackKind): Readonly<Pick<AttackSpec, 'duration' | 'impact' | 'range'>> {
+  const { duration, impact, range } = ATTACKS[kind];
+  return { duration, impact, range };
+}
+
 interface FighterState {
   attackElapsed: number;
   hitChecked: boolean;

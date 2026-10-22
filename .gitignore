@@ -3,3 +3,7 @@ dist/
 *.local
 test-results/
 .DS_Store
+.qa-baseline/
+playwright-report/
+qa-captures/
+tests/fixtures/reference/assets

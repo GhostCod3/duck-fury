@@ -1,6 +1,6 @@
 # DUCK FURY
 
-A playable, original 2D beat ’em up prototype built with **Phaser 3, TypeScript, Vite, and HTML5 Canvas**. Play as Rook, an armored wasteland duck, and defeat Dustjaw at an abandoned desert gas station. All characters, scenery, effects, and interface icons are drawn programmatically; no external art assets are required.
+A playable, original 2D beat ’em up prototype built with **Phaser 3, TypeScript, Vite, and HTML5 Canvas**. Play as Rook, an armored wasteland duck, and defeat Dustjaw on a painted scrapyard road. The approved segmented artwork is bundled locally, with procedural characters and scenery retained as fallbacks; no external asset service is required.
 
 ## Run locally
 
@@ -85,16 +85,22 @@ const events = world.step(deltaSeconds, {
 
 The simulation exposes `player`, `enemy`, `status` (`playing`, `won`, or `lost`), elapsed `time`, and the current punch `combo`. Each fighter exposes position, facing, health, movement, attack kind, normalized attack progress, hurt state, and death state. Returned `attack`, `hit`, and `death` events drive visual/audio feedback. On attack events, `target` identifies the attacker; on hit and death events, it identifies the affected fighter.
 
-The world is 2,600 units wide. Walkable lanes span Y=460–635, with depth sorting tied to each fighter's Y position. Frontal reach and lane tolerance determine hits; each swing can hit only once. Arena boundaries and fighter separation provide basic collisions. Decorative environment props do not block movement. Frame deltas are capped at 50 ms so a stalled frame cannot skip an entire enemy windup.
+The world is 2,600 units wide. Walkable lanes span Y=460–635, with depth sorting tied to each fighter's Y position. Frontal reach and lane tolerance determine hits; each swing can hit only once. Arena boundaries and fighter separation provide basic collisions. Decorative environment props do not block movement. The scene advances at 120 fixed steps per second with bounded catch-up and intentional hit-stop. Direct calls to `CombatWorld.step` retain their independent 50 ms stall cap.
 
 The automated tests cover normalized movement and bounds, frame-stall handling, attack direction and lanes, buffered three-hit combos, damage once per attack, combo timeout, kick knockback, AI pursuit and telegraphing, lane dodges, both encounter outcomes, and fighter separation at arena edges. Browser and Android interaction checks complement these simulation tests.
 
-## Optional hand-drawn character sprites
+## Approved segmented character artwork
 
-The renderer supports transparent sprite sheets with idle, walk, attack/combo, hurt, and death states. It currently ships with an empty character manifest and continues to display the original procedural ducks. **Final hand-drawn character artwork is not included.**
+The supplied approved wasteland character parts and painted scrapyard are integrated through a dedicated segmented renderer. Rook uses the original parts, and Dustjaw uses the approved cached blue/green variant of the same rig. The renderer preserves the upright idle, merged head/collar, articulated limbs and boots, spring scarf, victim-local wounds, and complete constant-size knockout. Combat remains authoritative in `CombatWorld`.
+
+See [the segmented integration notes](docs/approved-rig/INTEGRATION.md) for asset provenance, rendering/fallback behavior, fixed-step timing, effects, and PR verification commands. This integration uses the supplied segmented artwork; it does not pretend that separate final frame-sheet artwork has been created.
+
+## Optional frame-based character sprites
+
+The existing transparent frame-sheet renderer and validation are preserved as a fallback beneath the approved segmented renderer. Its character manifest is still empty; no final frame-sheet assets are included. If the segmented rig cannot load, a complete valid sheet is selected when configured, otherwise the procedural ducks remain available.
 
 See [the character sprite contract](docs/character-sprites.md) for Rook and Dustjaw's art direction, required frames, cell dimensions, ground anchors, a complete manifest example, asset loading/fallback behavior, and Android acceptance checks. Adding complete, validated packs in `public/assets/characters/` enables the sprite renderer without changing combat or controls.
 
 ## Prototype scope
 
-This is one small, complete encounter with one enemy, one environment, a scrolling camera, and replay. Artwork uses original procedural placeholders and pose animation rather than a finished hand-drawn sprite library. There are no additional levels, enemy waves, pickups, persistent progress, multiplayer, or offline installation features. Balance and animation are intentionally kept compact so the combat loop can be tested and extended.
+This is one small, complete encounter with one enemy, one environment, a scrolling camera, and replay. Characters use the approved jointed artwork with skeletal animation; final frame-sheet artwork is not included. There are no additional levels, enemy waves, pickups, persistent progress, multiplayer, or offline installation features.
