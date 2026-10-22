@@ -11,7 +11,7 @@ export const extend = (a: Vec, length: number, angle: number): Vec => p(a.x + Ma
 export const rotate = (v: Vec, r: number): Vec => p(v.x * Math.cos(r) - v.y * Math.sin(r), v.x * Math.sin(r) + v.y * Math.cos(r));
 export const boneAngle = (a: Vec, b: Vec): number => Math.atan2(b.x - a.x, b.y - a.y);
 export const mixAngle = (a: number, b: number, t: number): number => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
-export const FIT_SCALE = 1.2;
+export const FIT_SCALE = 1;
 export const AMBIENT_RATE = 1.3;
 export const KO_END = 1.25;
 

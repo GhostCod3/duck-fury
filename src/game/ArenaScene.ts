@@ -11,6 +11,7 @@ import { BloodEffects } from '../art/BloodEffects';
 import type { WorldPresentation } from '../art/PaintedWorld';
 import type { RigSnapshot } from '../art/rig/RigState';
 import type { Fighter } from './combat';
+import { presentationPositions } from '../art/CharacterPresentation';
 
 export type PlayMode = 'ready' | 'playing' | 'paused' | 'won' | 'lost';
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -155,7 +156,6 @@ export class ArenaScene extends Phaser.Scene {
     const input = this.mode === 'playing' && this.world.status === 'playing' ? sampled : { x: 0, y: 0, punch: false, kick: false };
     this.stepper.advance(elapsed, input, (dt, stepInput, stopped) => {
       this.blood.model.advance(dt * 1.3);
-      if (this.mode === 'won' || this.mode === 'lost') return;
       if (stopped && this.world.status === 'playing') return;
       this.presentationTime += dt;
       if (this.mode === 'playing' && this.world.status === 'playing') {
@@ -179,22 +179,28 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private resetClock(): void { this.stepper.reset(); this.skipElapsed = true; this.controls?.clear(); }
-  private snapshot(fighter: Fighter): RigSnapshot { return { ...fighter, progress: fighter.attackProgress, time: this.presentationTime * 1000 }; }
+  private snapshot(fighter: Fighter): RigSnapshot {
+    const position = this.playerView?.rig && this.enemyView?.rig ? presentationPositions(this.world.player, this.world.enemy)[fighter.id] : fighter;
+    return { ...fighter, x: position.x, y: position.y, progress: fighter.attackProgress, time: this.presentationTime * 1000 };
+  }
   private advanceViews(dt: number): void {
     const player = this.world.player, enemy = this.world.enemy;
-    const playerTarget = Math.abs(player.y - enemy.y) <= 32 && (enemy.x - player.x) * player.facing >= 0 ? this.enemyView.hurtAnchor() : undefined;
-    const enemyTarget = Math.abs(player.y - enemy.y) <= 32 && (player.x - enemy.x) * enemy.facing >= 0 ? this.playerView.hurtAnchor() : undefined;
-    this.playerView.advancePresentation(dt, this.snapshot(player), playerTarget);
-    this.enemyView.advancePresentation(dt, this.snapshot(enemy), enemyTarget);
+    const playerPose = this.snapshot(player), enemyPose = this.snapshot(enemy);
+    const playerTarget = Math.abs(player.y - enemy.y) <= 32 && (enemy.x - player.x) * player.facing >= 0 ? this.enemyView.hurtAnchor(playerPose) : undefined;
+    const enemyTarget = Math.abs(player.y - enemy.y) <= 32 && (player.x - enemy.x) * enemy.facing >= 0 ? this.playerView.hurtAnchor(enemyPose) : undefined;
+    this.playerView.advancePresentation(dt, playerPose, playerTarget, this.world.status !== 'playing');
+    this.enemyView.advancePresentation(dt, enemyPose, enemyTarget, this.world.status !== 'playing');
   }
 
   private paintFighters(time: number): void {
     for (const [fighter, view] of [[this.world.player, this.playerView], [this.world.enemy, this.enemyView]] as const) {
       const other = fighter.id === 'player' ? this.world.enemy : this.world.player;
       // Approved reference order: within a nearly identical lane, keep the active strike visible.
-      const strikingInFront = fighter.attack && !other.attack && Math.abs(fighter.y - other.y) <= 3;
-      view.setPosition(fighter.x, fighter.y).setDepth(strikingInFront ? Math.max(fighter.y, other.y) + .01 : fighter.y);
-      view.renderPose({facing:fighter.facing,moving:fighter.moving,attack:fighter.attack,progress:fighter.attackProgress,hurt:fighter.hurt,dead:fighter.dead,time});
+      const pose = view.presentationPose;
+      const otherPose = (fighter.id === 'player' ? this.enemyView : this.playerView).presentationPose;
+      const strikingInFront = pose.attack && !otherPose.attack && Math.abs(fighter.y - other.y) <= 3;
+      view.setPosition(pose.x, pose.y).setDepth(strikingInFront ? Math.max(fighter.y, other.y) + .01 : fighter.y);
+      view.renderPose({ ...pose, time });
     }
     const enemy = this.world.enemy;
     const warning = this.enemyView.telegraphAnchor();
@@ -220,7 +226,7 @@ export class ArenaScene extends Phaser.Scene {
     const attacker = event.target === 'player' ? this.enemyView : this.playerView;
     const target = event.target === 'player' ? this.world.player : this.world.enemy;
     const source = event.target === 'player' ? this.world.enemy : this.world.player;
-    const point = victim.hurtAnchor();
+    const point = victim.hurtAnchor(this.snapshot(source));
     victim.onHit(heavy); attacker.lockContact(point);
     this.blood.model.burst(point, target.y, source.facing, heavy, victim.rig?.rigState.scale ?? 1);
     const x = point.x, y = point.y;
@@ -284,7 +290,7 @@ export class ArenaScene extends Phaser.Scene {
   verificationSnapshot(): object {
     const view = (v: CharacterView) => {
       const s = v.rig?.rigState;
-      return s ? { renderer: 'rig', wounds: s.wounds, scale: s.scale, complete: s.complete, deadTime: s.deadTime, pose: s.pose, spring: { ...s.spring }, strike: s.strikePoint(), hurtAnchor: s.hurtAnchor() } : { renderer: 'fallback' };
+      return s ? { renderer: 'rig', root: { x: s.snapshot.x, y: s.snapshot.y }, presentationAttack: s.snapshot.attack, presentationProgress: s.snapshot.progress, idleTime: s.idleTime, wounds: s.wounds, scale: s.scale, complete: s.complete, deadTime: s.deadTime, pose: s.pose, spring: { ...s.spring }, strike: s.strikePoint(), hurtAnchor: s.hurtAnchor() } : { renderer: 'fallback', presentationAttack: v.presentationPose.attack };
     };
     return { presentationTime: this.presentationTime, views: { player: view(this.playerView), enemy: view(this.enemyView) }, blood: { droplets: this.blood.model.droplets.map(q => ({ ...q })), stains: this.blood.model.stains.map(q => ({ ...q })) }, resources: { variants: getRigAssets(this)?.resourceCount ?? 0, textures: this.textures.getTextureKeys().length, transient: this.transient.size } };
   }

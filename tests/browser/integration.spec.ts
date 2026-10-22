@@ -3,9 +3,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 
 type Snapshot = {
   mode: string; status: string; time: number; cameraX: number;
-  player: { x: number; y: number; hp: number; attack: string | null };
+  player: { x: number; y: number; hp: number; attack: string | null; attackProgress: number };
   enemy: { x: number; y: number; hp: number };
-  views: Record<'player' | 'enemy', { renderer: string; wounds: number; scale: number; complete: boolean; deadTime: number; pose: { front: {x:number;y:number}; back: {x:number;y:number}; hip: {x:number;y:number}; headAngle: number }; spring: object }>;
+  views: Record<'player' | 'enemy', { renderer: string; root: {x:number;y:number}; presentationAttack: string | null; presentationProgress: number; idleTime: number; wounds: number; scale: number; complete: boolean; deadTime: number; pose: { attack: {kind:string}; front: {x:number;y:number}; back: {x:number;y:number}; hip: {x:number;y:number}; headAngle: number }; spring: object }>;
   blood: { droplets: object[]; stains: Array<{x:number;y:number}> };
   resources: { variants: number; textures: number; transient: number };
 };
@@ -164,6 +164,58 @@ test('production prefix, image MIME types, no development hooks, and graceful ri
   expect((await snapshot(fallback)).views.player.renderer).toBe('fallback');
   await fallback.locator('#start-button').click(); expect((await snapshot(fallback)).mode).toBe('playing');
   await context.close();
+});
+
+test('ordinary enemy approach hits, then real keyboard movement reaches readable minimum contact', async ({ page }) => {
+  await ready(page); await page.locator('#start-button').click();
+  // No setup fixture: use the actual starting positions, pursuit and telegraphed attack.
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().player.hp < 100);
+  await page.keyboard.press('Escape'); let state = await snapshot(page);
+  expect(state.player.hp).toBe(88); expect(Math.abs(state.enemy.x - state.player.x)).toBeLessThanOrEqual(98);
+  expect(Math.abs(state.views.enemy.root.x - state.views.player.root.x)).toBeGreaterThan(105);
+  await capture(page, 'review-normal-enemy-hit');
+  await page.keyboard.press('Escape'); await page.keyboard.down('d');
+  await page.waitForFunction(() => { const s = (window as any).__duckFury.snapshot(); return Math.abs(s.enemy.x - s.player.x) <= 44.01; });
+  await page.keyboard.up('d'); await page.keyboard.press('Escape'); state = await snapshot(page);
+  expect(Math.abs(state.enemy.x - state.player.x)).toBeLessThanOrEqual(44.01);
+  expect(Math.abs(state.views.enemy.root.x - state.views.player.root.x)).toBeGreaterThan(105);
+  await capture(page, 'review-minimum-contact-right');
+  await page.keyboard.press('Escape'); await page.keyboard.press('j');
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().enemy.hp === 107);
+  await page.keyboard.press('Escape'); await capture(page, 'review-minimum-hit-right');
+});
+
+test('minimum contact in the other facing and presentation-only winner recovery through KO and results', async ({ page }) => {
+  await ready(page); await setup(page, { left: true }); await page.keyboard.down('a');
+  await page.waitForFunction(() => { const s = (window as any).__duckFury.snapshot(); return Math.abs(s.enemy.x - s.player.x) <= 44.01; });
+  await page.keyboard.up('a'); await page.keyboard.press('j');
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().enemy.hp === 107);
+  await page.keyboard.press('Escape'); let state = await snapshot(page);
+  expect(Math.abs(state.views.enemy.root.x - state.views.player.root.x)).toBeGreaterThan(105);
+  await capture(page, 'review-minimum-hit-left');
+  await setup(page, { lethal: true }); await page.keyboard.down('d');
+  await page.waitForFunction(() => { const s = (window as any).__duckFury.snapshot(); return Math.abs(s.enemy.x - s.player.x) <= 44.01; });
+  await page.keyboard.up('d'); await page.keyboard.press('j');
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().status === 'won');
+  await page.keyboard.press('Escape'); const impact = await snapshot(page);
+  await capture(page, 'review-lethal-impact'); await page.waitForTimeout(150);
+  expect((await snapshot(page)).views).toEqual(impact.views);
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => (window as any).__duckFury.snapshot().views.player.presentationAttack === null);
+  state = await snapshot(page);
+  expect(state.views.player.pose.attack.kind).toBe('none'); expect(state.views.player.idleTime).toBeGreaterThan(0);
+  expect(state.views.enemy.complete).toBe(false); expect(state.player.attackProgress).toBe(impact.player.attackProgress);
+  expect(state.time).toBe(impact.time); expect(state.player.x).toBe(impact.player.x); expect(state.enemy.hp).toBe(0);
+  await page.keyboard.press('Escape'); await capture(page, 'review-winner-recovered-during-ko'); await page.keyboard.press('Escape');
+  await expect(page.locator('#state-title')).toHaveText('DUST SETTLED.');
+  const settled = await snapshot(page); await capture(page, 'review-post-ko-idle');
+  await page.keyboard.press('j'); await page.keyboard.press('k'); await page.keyboard.down('d'); await page.waitForTimeout(350); await page.keyboard.up('d');
+  const later = await snapshot(page);
+  expect(later.time).toBe(impact.time); expect(later.player).toEqual(settled.player); expect(later.enemy).toEqual(settled.enemy);
+  expect(later.views.enemy).toEqual(settled.views.enemy);
+  expect(later.views.player.idleTime).toBeGreaterThan(settled.views.player.idleTime);
+  expect(later.views.player.pose.headAngle).not.toBe(settled.views.player.pose.headAngle);
+  expect(later.views.player.presentationAttack).toBeNull();
 });
 
 test('capture the actual unmodified baseline before comparison', async ({ page }) => {

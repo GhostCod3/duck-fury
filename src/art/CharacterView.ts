@@ -6,6 +6,7 @@ import { getRigAssets } from './rig/rigAssets';
 import { RigCharacterView } from './rig/RigCharacterView';
 import type { RigSnapshot } from './rig/RigState';
 import type { Vec } from './rig/RigMath';
+import { AttackRecovery } from './CharacterPresentation';
 
 /** Ground-anchored rendering only. Combat positions, ranges, and collisions stay in CombatWorld. */
 export class CharacterView extends Phaser.GameObjects.Container {
@@ -15,9 +16,12 @@ export class CharacterView extends Phaser.GameObjects.Container {
   private readonly sheet?: CharacterSheet;
   private readonly animation = new CharacterAnimation();
   readonly rig?: RigCharacterView;
+  private readonly recovery = new AttackRecovery();
+  private pose: RigSnapshot;
 
   constructor(scene: Phaser.Scene, x: number, y: number, id: CharacterId) {
     super(scene, x, y);
+    this.pose = { x, y, facing: id === 'rook' ? 1 : -1, moving: false, attack: null, progress: 0, hurt: false, dead: false, time: 0 };
     scene.add.existing(this);
     this.fallback = new DuckView(scene, 0, 0, id === 'dustjaw');
     this.add(this.fallback);
@@ -35,12 +39,16 @@ export class CharacterView extends Phaser.GameObjects.Container {
     }
   }
 
-  advancePresentation(dt: number, pose: RigSnapshot, target?: Vec): void { this.rig?.rigState.advance(dt, pose, target); }
-  resetPresentation(pose: RigSnapshot): void { this.rig?.rigState.reset(pose); }
+  get presentationPose(): Readonly<RigSnapshot> { return this.pose; }
+  advancePresentation(dt: number, pose: RigSnapshot, target?: Vec, combatStopped = false): void {
+    this.pose = this.recovery.advance(dt, pose, combatStopped);
+    this.rig?.rigState.advance(dt, this.pose, target);
+  }
+  resetPresentation(pose: RigSnapshot): void { this.recovery.reset(); this.pose = { ...pose }; this.rig?.rigState.reset(pose); }
   onHit(heavy: boolean): void { this.rig?.rigState.addWound(heavy); }
   lockContact(point: Vec): void { this.rig?.rigState.lockContact(point); }
   beginKnockout(pose: RigSnapshot): void { this.rig?.rigState.beginKnockout(pose); }
-  hurtAnchor(): Vec { return this.rig?.rigState.hurtAnchor() ?? { x: this.x, y: this.y - 91 }; }
+  hurtAnchor(from?: Vec): Vec { return this.rig?.rigState.hurtAnchor(from) ?? { x: this.x, y: this.y - 91 }; }
   telegraphAnchor(): Vec {
     const state = this.rig?.rigState;
     return state ? state.worldPoint({ x: state.pose.neck.x, y: state.pose.neck.y - 100 }) : { x: this.x, y: this.y - 185 };

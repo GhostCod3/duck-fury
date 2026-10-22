@@ -212,7 +212,11 @@ export class RigState {
     const x = this.frames ? lerp(this.snapshot.x, clamp(this.snapshot.x, 80 + 60 * this.scale, 2520 - 60 * this.scale), smooth(this.deadTime / .95)) : this.snapshot.x;
     return p(x + (local.x - 250) * this.scale * this.snapshot.facing, this.snapshot.y + (local.y - 382) * this.scale);
   }
-  hurtAnchor(): Vec { return this.worldPoint(p(lerp(this.pose.neck.x, this.pose.hip.x, .35), lerp(this.pose.neck.y, this.pose.hip.y, .35))); }
+  hurtAnchor(from?: Vec): Vec {
+    const center = this.worldPoint(p(lerp(this.pose.neck.x, this.pose.hip.x, .35), lerp(this.pose.neck.y, this.pose.hip.y, .35)));
+    // Contact the facing surface of the shirt, not the torso's hidden center.
+    return from ? shift(center, Math.sign(from.x - center.x) * 32 * this.scale, 0) : center;
+  }
   strikePoint(): Vec { return this.worldPoint(this.pose.attack.kind === 'kick' ? shift(this.pose.front, 20, 5) : this.arm(this.pose.attack.hand).wrist); }
 
   beginKnockout(snapshot: RigSnapshot): void {
