@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { RigCharacterView } from '../art/rig/RigCharacterView';
 import { RigState, type ArmPose, type RigPose } from '../art/rig/RigState';
-import { aimBone, p, shift } from '../art/rig/RigMath';
+import { aimBone, clamp, p, shift, smooth, type Vec } from '../art/rig/RigMath';
 import type { RigAssets } from '../art/rig/rigAssets';
 import type { ArenaActor, WeaponKind } from './ArenaWorld';
 
@@ -9,6 +9,12 @@ const VIEW_SCALE = .32;
 class ShooterRig extends RigState {
   holding = false;
   recoil = 0;
+  override worldPoint(local: Vec): Vec {
+    // Arena roots use presentation units; the classic 2600-wide corpse clamp does not apply.
+    const x = this.snapshot.x * VIEW_SCALE;
+    const offset = this.pose.knockedOut ? (clamp(x,64,1216)-x) / VIEW_SCALE * smooth(this.deadTime/.95) : 0;
+    return p(this.snapshot.x + offset + (local.x-250)*this.scale*this.snapshot.facing,this.snapshot.y+(local.y-382)*this.scale);
+  }
   override arm(far: boolean, pose: RigPose = this.pose): ArmPose {
     if (!this.holding || pose.knockedOut) return super.arm(far, pose);
     const shoulder = far ? pose.farShoulder : pose.nearShoulder;

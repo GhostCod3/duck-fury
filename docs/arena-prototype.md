@@ -29,7 +29,7 @@ Presentation continues independently after a kill. Both actors can finish landin
 
 Local commands: `npm install --no-audit --no-fund`, `npm test`, `npm run build`. Node.js 24 is required for the native TypeScript unit-test runner. `npm test` now uses `node --test` so it does not need the tsx CLI's Unix IPC pipe.
 
-The 39 existing tests are preserved, plus 14 arena regressions for countdown, double jump, platforms/drop-through, swapping ammo, swept hits and draws, weapon limits, projectile blocking/self-blast, ordinary bot play, upper-platform routing, match/reset, arena cycling, fixed-rate input/resource bounds and collision edge cases.
+The 39 existing tests are preserved, plus 15 arena regressions for countdown, double jump, platforms/drop-through, swapping ammo, swept hits and draws, weapon limits, projectile blocking/self-blast, ordinary bot play, upper-platform routing, match/reset, arena cycling, fixed-rate input/resource bounds and collision edge cases.
 
 Seven additional Playwright scenarios exercise actual equipment/bot play, jumping/drop-through, one-hit scoring/KO/next arena, first-to-five/replay, pause/visibility, three simultaneous touch pointers/cancellation/rotation, production assets/classic entry and missing-rig fallback. The existing classic scenarios navigate to `classic.html`; the baseline fixture remains unchanged.
 

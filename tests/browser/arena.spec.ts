@@ -19,7 +19,7 @@ test('arena loads original rigs and supports real weapon pickup and the ordinary
   await ready(page);const initial=await state(page);expect(initial.phase).toBe('countdown');expect(initial.actors.player.weapon).toBeNull();
   await capture(page,'after-arena-ready');
   await page.locator('#arena-start').click();await page.waitForFunction(()=>(window as any).__duckArena.snapshot().phase==='playing');
-  await page.keyboard.press('e');expect((await state(page)).actors.player.weapon).toBe('pistol');
+  await page.keyboard.press('e');await page.waitForFunction(()=>(window as any).__duckArena.snapshot().actors.player.weapon==='pistol');
   await page.waitForFunction(()=>(window as any).__duckArena.snapshot().scores.enemy>0);
   expect((await state(page)).actors.player.alive).toBe(false);await capture(page,'after-arena-bot-hit');expect(errors).toEqual([]);
 });
@@ -83,5 +83,5 @@ test('production arena assets and classic entry load, and missing rig parts reta
   await page.goto('http://127.0.0.1:4173/duck-fury/classic.html');await expect(page.locator('#loading')).toBeHidden();
   const context=await browser.newContext();const fallback=await context.newPage();await fallback.route('**/assets/rig/head.webp',r=>r.abort());
   await ready(fallback);await fallback.locator('#arena-start').click();await fallback.waitForFunction(()=>(window as any).__duckArena.snapshot().phase==='playing');
-  await fallback.keyboard.press('e');expect((await state(fallback)).actors.player.weapon).toBe('pistol');expect(errors).toEqual([]);await context.close();
+  await fallback.keyboard.press('e');await fallback.waitForFunction(()=>(window as any).__duckArena.snapshot().actors.player.weapon==='pistol');expect(errors).toEqual([]);await context.close();
 });

@@ -103,3 +103,12 @@ test('segment collision handles parallel misses and bullets crossing a thin body
   assert.equal(segmentRect(0,5,0,10,{x:50,y:0,w:5,h:10}),null);
   assert.equal(WEAPONS.pistol.pellets,1);
 });
+
+test('a quick fire tap survives a zero-tick frame and held fire continues across substeps',()=>{
+  const clock=new ArenaStepper();let fired=0;
+  clock.advance(.001,{...NO_INPUT,fire:true},()=>assert.fail());
+  clock.advance(.099,NO_INPUT,(_dt,input)=>fired+=Number(input.fire));assert.equal(fired,1);
+  fired=0;clock.advance(.1,{...NO_INPUT,fire:true},(_dt,input)=>fired+=Number(input.fire));assert.equal(fired,12);
+  clock.advance(.001,{...NO_INPUT,fire:true},()=>{});clock.reset();
+  clock.advance(.01,NO_INPUT,(_dt,input)=>assert.equal(input.fire,false));
+});

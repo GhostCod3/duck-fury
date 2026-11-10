@@ -93,6 +93,7 @@ export class ArenaWorld {
       const p = this.actors.player.alive, e = this.actors.enemy.alive;
       this.winner = p === e ? null : p ? 'player' : 'enemy';
       if (this.winner) this.scores[this.winner]++;
+      for (const a of Object.values(this.actors)) a.jumpBuffer = 0;
       this.phase = 'roundOver'; this.phaseTime = 2.2; this.projectiles = [];
       events.push({ type: 'round', x: 640, y: 330, winner: this.winner });
     }
@@ -203,17 +204,17 @@ export class ArenaWorld {
 /** Retains action edges through zero-tick frames and consumes each once. */
 export class ArenaStepper {
   private debt = 0;
-  private pending = { jump: false, pickup: false };
-  reset(): void { this.debt = 0; this.pending = { jump: false, pickup: false }; }
+  private pending = { jump: false, pickup: false, fire: false };
+  reset(): void { this.debt = 0; this.pending = { jump: false, pickup: false, fire: false }; }
   advance(seconds: number, input: ArenaInput, tick: (dt: number, input: ArenaInput) => void): void {
     if (!Number.isFinite(seconds) || seconds < 0) return;
-    this.pending.jump ||= input.jump; this.pending.pickup ||= input.pickup;
+    this.pending.jump ||= input.jump; this.pending.pickup ||= input.pickup; this.pending.fire ||= input.fire;
     this.debt = Math.min(.25, this.debt + seconds);
     let count = 0;
     while (this.debt + 1e-10 >= 1 / 120 && count++ < 30) {
       this.debt = Math.max(0, this.debt - 1 / 120);
-      const edges = this.pending; this.pending = { jump: false, pickup: false };
-      tick(1 / 120, { ...input, ...edges });
+      const edges = this.pending; this.pending = { jump: false, pickup: false, fire: false };
+      tick(1 / 120, { ...input, ...edges, fire: input.fire || edges.fire });
     }
   }
 }
