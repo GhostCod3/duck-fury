@@ -1,3 +1,11 @@
+# Arena prototype: Last Duck StandingThe default entry is now an original, one-hit platform arena shooter: one player versus a bot, three arenas, three collectible weapons, double jumping and first-to-five rounds. The original segmented warrior artwork and painted wasteland are reused.
+
+Run with Node.js 24: `npm install`, `npm run dev`, `npm test`, `npm run build`. Move with A/D or arrows, jump with Space, hold J to shoot, and press E near a weapon to equip/swap. Landscape touch controls are built in. [Arena implementation and verification](docs/arena-prototype.md).
+
+The previous brawler remains available at [`classic.html`](classic.html). The documentation below describes that preserved mode.
+
+---
+
 # DUCK FURY
 
 A playable, original 2D beat ’em up prototype built with **Phaser 3, TypeScript, Vite, and HTML5 Canvas**. Play as Rook, an armored wasteland duck, and defeat Dustjaw on a painted scrapyard road. The approved segmented artwork is bundled locally, with procedural characters and scenery retained as fallbacks; no external asset service is required.

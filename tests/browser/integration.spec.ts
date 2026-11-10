@@ -12,7 +12,7 @@ type Snapshot = {
 const snapshot = (page: Page): Promise<Snapshot> => page.evaluate(() => (window as any).__duckFury.snapshot());
 const setup = (page: Page, options: object = {}) => page.evaluate(options => (window as any).__duckFury.setup(options), options);
 async function ready(page: Page) {
-  await page.goto('./');
+  await page.goto('./classic.html');
   await expect(page.locator('#loading')).toBeHidden();
   await page.waitForFunction(() => !!(window as any).__duckFury?.snapshot().views);
 }
@@ -102,7 +102,7 @@ test('authoritative hits, misses, combo buffering, victim wounds, complete KO, a
 
 test('landscape mobile multitouch, cancellation, rotation, sound and visibility pause', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 915, height: 412 }, hasTouch: true, isMobile: true });
-  const page = await context.newPage(); await page.goto('http://127.0.0.1:5173/duck-fury/');
+  const page = await context.newPage(); await page.goto('http://127.0.0.1:5173/duck-fury/classic.html');
   await expect(page.locator('#loading')).toBeHidden(); await page.locator('#start-button').tap();
   const start = await snapshot(page), pad = (await page.locator('#dpad').boundingBox())!, punch = (await page.locator('#punch-button').boundingBox())!;
   const cdp = await context.newCDPSession(page);
@@ -153,14 +153,14 @@ test('left-facing kick, enemy victim isolation, and stationary decals through ca
 test('production prefix, image MIME types, no development hooks, and graceful rig fallback', async ({ page, browser }) => {
   const assets = new Map<string, {status:number;mime:string}>();
   page.on('response', response => { if (response.url().includes('/assets/rig/') || response.url().includes('/assets/world/')) assets.set(response.url(), { status: response.status(), mime: response.headers()['content-type'] ?? '' }); });
-  await page.goto('http://127.0.0.1:4173/duck-fury/'); await expect(page.locator('#loading')).toBeHidden();
+  await page.goto('http://127.0.0.1:4173/duck-fury/classic.html'); await expect(page.locator('#loading')).toBeHidden();
   expect(assets.size).toBe(13);
   for (const [url, result] of assets) { expect(url).toContain('/duck-fury/assets/'); expect(result.status).toBe(200); expect(result.mime).toContain('image/webp'); }
   expect(await page.evaluate(() => (window as any).__duckFury)).toBeUndefined();
   await page.locator('#start-button').click(); await expect(page.locator('#enemy-hud')).toBeVisible();
   const context = await browser.newContext(); const fallback = await context.newPage();
   await fallback.route('**/assets/rig/head.webp', route => route.abort());
-  await fallback.goto('http://127.0.0.1:5173/duck-fury/'); await expect(fallback.locator('#loading')).toBeHidden();
+  await fallback.goto('http://127.0.0.1:5173/duck-fury/classic.html'); await expect(fallback.locator('#loading')).toBeHidden();
   expect((await snapshot(fallback)).views.player.renderer).toBe('fallback');
   await fallback.locator('#start-button').click(); expect((await snapshot(fallback)).mode).toBe('playing');
   await context.close();

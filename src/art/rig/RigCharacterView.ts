@@ -17,8 +17,8 @@ const WOUNDS = {
 export class RigCharacterView extends Phaser.GameObjects.Container {
   readonly rigState: RigState;
   private readonly assets: RigAssets;
-  constructor(scene: Phaser.Scene, enemy: boolean, assets: RigAssets, snapshot: RigSnapshot) {
-    super(scene, 0, 0); this.assets = assets; this.rigState = new RigState(enemy, snapshot); scene.add.existing(this);
+  constructor(scene: Phaser.Scene, enemy: boolean, assets: RigAssets, snapshot: RigSnapshot, state?: RigState) {
+    super(scene, 0, 0); this.assets = assets; this.rigState = state ?? new RigState(enemy, snapshot); scene.add.existing(this);
   }
 
   private part(name: PartName, dark = false): PartImage {
