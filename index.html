@@ -1,48 +1,36 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#151715" />
-    <meta name="description" content="DUCK FURY — an original wasteland beat ’em up. Step into the dust, throw a three-hit combo, and survive the last fuel stop." />
-    <title>DUCK FURY — Rust & Ruin</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23151715'/%3E%3Cpath d='M14 44V26L23 14L44 18L46 30L58 33L51 43H34L27 51Z' fill='%23dfb351'/%3E%3Cpath d='M33 25L44 27L39 31Z' fill='%23151715'/%3E%3C/svg%3E" />
-  </head>
-  <body>
-    <div id="app">
-      <header class="site-header">
-        <a class="brand" href="./" aria-label="Duck Fury home"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 46V28L21 12L45 17L47 31L61 34L52 45H34L26 55Z" fill="currentColor"/><path d="M32 25L44 27L39 32Z" fill="#151715"/></svg><span>DUCK <i>FURY</i></span></a>
-        <span class="brand-caption">NO POND. NO PEACE.</span>
-        <div class="header-right"><span class="build-tag"><span></span> PLAYABLE PROTOTYPE <b>V0.1</b></span><button id="help-button" class="text-button">How to play <span>↗</span></button></div>
-      </header>
-      <main>
-        <div class="chapter-heading"><div><span class="eyebrow">THE BADLANDS / CHAPTER 01</span><h1>RUST &amp; RUIN<span>.</span></h1></div><p>One last fuel stop.<br />One very bad day to be a duck.</p></div>
-        <section id="game-frame" class="game-frame" aria-label="Duck Fury game">
-          <div id="game-canvas" role="img" aria-label="Side-scrolling desert gas station combat arena"></div>
-          <div class="vignette" aria-hidden="true"></div>
-          <div class="hud">
-            <div class="fighter-hud"><div class="portrait"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M13 55V30L24 13L43 17L44 28L58 33L52 42H36L29 55Z" fill="#e7dec5"/><path d="M19 25L23 15L43 19L44 25Z" fill="#b45b3f"/><path d="M35 28L43 30L38 33Z" fill="#292b26"/><path d="M44 31L58 34L51 41H39Z" fill="#d6a44d"/></svg></div><div class="health-content"><div class="health-name">ROOK <span id="hp-number">100 / 100</span></div><div class="health-track"><div id="player-health"></div></div><span class="fighter-label">THE LAST GOOD DUCK</span></div></div>
-            <div class="location-hud"><span>SECTOR 07</span><b>THE DRY MILE</b></div>
-            <div class="hud-buttons"><button id="sound-button" class="icon-button" aria-label="Mute sound" title="Sound on">♪</button><button id="fullscreen-button" class="icon-button" aria-label="Enter fullscreen" title="Fullscreen">⛶</button><button id="pause-button" class="icon-button" aria-label="Pause game" title="Pause · Esc">Ⅱ</button></div>
-          </div>
-          <div id="enemy-hud" class="enemy-hud" hidden><div>DUSTJAW <span>WASTELAND RAIDER</span></div><div class="enemy-track"><i id="enemy-health"></i></div></div>
-          <div id="mission-label" class="mission-label"><span class="objective-dot"></span><span id="mission-text">CLEAR THE FUEL STOP</span></div>
-          <div id="combo-readout" class="combo-readout" aria-live="polite"></div>
-          <div id="touch-controls" class="touch-controls" aria-label="Touch game controls">
-            <div id="dpad" class="dpad" role="group" aria-label="Movement pad"><span class="pad-ring"></span><span class="pad-center"></span><span class="pad-arrow up">▲</span><span class="pad-arrow down">▼</span><span class="pad-arrow left">◀</span><span class="pad-arrow right">▶</span><span id="pad-thumb" class="pad-thumb"></span></div>
-            <div class="action-buttons"><button id="kick-button" class="action-button kick" aria-label="Kick"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M13 7L21 9L17 22L31 20L34 25L15 31L9 25Z"/></svg><span>KICK <small>K</small></span></button><button id="punch-button" class="action-button punch" aria-label="Punch"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 13L15 8L20 10L24 8L28 11L31 12L32 22L26 29L14 28L9 22L6 18L8 15L13 18Z"/></svg><span>PUNCH <small>J</small></span></button></div>
-          </div>
-          <div id="start-overlay" class="overlay start-overlay"><div class="start-card"><div class="eyebrow">A WASTELAND BEAT ’EM UP</div><h2>FEATHERS.<br />FISTS. <em>FURY.</em></h2><p>The fuel is gone. The trouble isn’t.</p><button id="start-button" class="primary-button">ENTER THE WASTELAND <span>→</span></button><div class="start-hint">PRESS ENTER TO START</div></div><span class="stamp">LAST STOP<br /><b>NO. 07</b><br />DEAD END AHEAD</span></div>
-          <div id="state-overlay" class="overlay state-overlay" hidden><div class="state-card"><span id="state-eyebrow" class="eyebrow">TAKE A BREATHER</span><h2 id="state-title">PAUSED.</h2><p id="state-description">The wasteland can wait.</p><button id="resume-button" class="primary-button">BACK TO THE FIGHT <span>→</span></button><button id="restart-button" class="text-button">Restart encounter ↻</button></div></div>
-          <div class="rotate-hint"><span>↻</span><b>TURN INTO THE WASTELAND</b><p>Rotate your phone for the best fight.</p></div>
-          <div id="loading" class="loading">BUILDING THE BADLANDS<span>…</span></div>
-        </section>
-        <div class="control-strip"><span class="control-item"><span class="key-group"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>MOVE <small>or arrow keys</small></span></span><span class="control-item"><kbd>J</kbd><span>PUNCH <small>tap ×3 to combo</small></span></span><span class="control-item"><kbd>K</kbd><span>KICK <small>make some room</small></span></span><span class="control-item"><kbd>ESC</kbd><span>PAUSE</span></span><span class="touch-note">TOUCH CONTROLS READY <i>✦</i></span></div>
-        <div class="field-notes"><div class="note-number">01 <span>/ THE ENCOUNTER</span></div><div><h3>WELCOME TO THE DRY MILE.</h3><p>A dead gas station. A hostile local. Settle it the old-fashioned way.</p></div><div class="status-note"><span></span> ORIGINAL WORLD. PURE ARCADE.</div></div>
-      </main>
-      <footer><span>DUCK FURY <i>© 2026</i></span><span>DUST OFF. FISTS UP.</span><span>IN DEVELOPMENT <b>■</b></span></footer>
-    </div>
-    <dialog id="help-dialog"><button id="close-help" class="close-help" aria-label="Close instructions">×</button><span class="eyebrow">FIELD MANUAL / 01</span><h2>SURVIVE THE STOP.</h2><p>Play as Rook, an armored drifter. Defeat Dustjaw to clear the abandoned station.</p><div class="help-rows"><div><b>MOVE</b><span>WASD / arrows · Touch directional pad</span></div><div><b>PUNCH</b><span>J / Z · Tap three times for a three-hit combo</span></div><div><b>KICK</b><span>K / X · A slower hit with extra reach and knockback</span></div><div><b>PAUSE</b><span>Escape / P · Pause button in the arena</span></div></div><p class="help-tip">Stay in the same lane and face your opponent. When Dustjaw winds up, move up or down to dodge. Your third punch and kicks push him back.</p><button id="help-done" class="primary-button">GOT IT <span>→</span></button></dialog>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#131c20" />
+  <meta name="description" content="DUCK FURY: an original wasteland arena shooter. Grab a weapon, jump between platforms and be the last duck standing. One hit. First to five." />
+  <title>DUCK FURY — Last Duck Standing</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23131c20'/%3E%3Cpath d='M14 44V26L23 14L44 18L46 30L58 33L51 43H34L27 51Z' fill='%23efba59'/%3E%3Cpath d='M33 25L44 27L39 31Z' fill='%23131c20'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <header class="arena-header"><a class="arena-brand" href="./"><span class="duck-mark">◢</span> DUCK <em>FURY</em><small>ARENA</small></a><span class="header-motto">LESS POND. MORE PROBLEMS.</span><nav><a href="./classic.html">Classic brawler ↗</a><button id="arena-help-button">Field manual <span>↗</span></button></nav></header>
+  <main class="arena-main">
+    <div class="arena-heading"><div><span class="arena-eyebrow">THE BADLANDS / ARENA SERIES</span><h1>LAST DUCK STANDING<span>.</span></h1></div><div class="arena-status"><i></i> SOLO VS BOT <span>01 / PROTOTYPE</span></div></div>
+    <section id="arena-frame" class="arena-frame is-ready" aria-label="Duck Fury platform arena shooter">
+      <div id="arena-canvas" role="img" aria-label="Multi-level scrapyard arena with two armed warrior ducks"></div>
+      <div class="arena-vignette"></div>
+      <div class="arena-hud"><div class="score-card player-score"><span class="score-name">ROOK <small>YOU</small></span><strong id="arena-player-score">0</strong><div class="score-ticks">FIRST TO FIVE</div></div><div class="round-card"><span id="arena-round">ROUND 01</span><b id="arena-timer">45</b><small id="arena-map">THE FOUNDRY</small></div><div class="score-card enemy-score"><span class="score-name">DUSTJAW <small>BOT</small></span><strong id="arena-enemy-score">0</strong><div class="score-ticks">ONE HIT. LIGHTS OUT.</div></div></div>
+      <div class="arena-tools"><button id="arena-sound" aria-label="Mute sound" title="Toggle sound">♪</button><button id="arena-fullscreen" aria-label="Enter fullscreen" title="Fullscreen">⛶</button><button id="arena-pause" aria-label="Pause game" title="Pause / Esc">Ⅱ</button></div>
+      <div id="arena-weapon-card" class="weapon-card empty"><span>LOADOUT</span><b id="arena-weapon">EMPTY HANDED</b><small id="arena-ammo">FIND A WEAPON</small></div>
+      <div id="arena-input-hint" class="input-hint"></div>
+      <div id="arena-pickup-hint" class="pickup-hint" aria-live="polite"></div>
+      <div class="arena-touch" aria-label="Touch game controls"><div id="arena-pad" class="arena-pad" role="group" aria-label="Movement pad"><span>◀</span><i id="arena-thumb"></i><span>▶</span></div><div class="arena-action-cluster"><button data-arena-action="pickup" class="equip-action" aria-label="Equip or swap weapon">↔<small>EQUIP</small></button><button data-arena-action="jump" class="jump-action" aria-label="Jump">↑<small>JUMP</small></button><button data-arena-action="fire" class="fire-action" aria-label="Fire weapon">✦<small>FIRE</small></button></div></div>
+      <div id="arena-start-overlay" class="arena-overlay arena-intro"><div class="intro-card"><span class="arena-eyebrow">A WASTELAND ARENA SHOOTER</span><h2>SMALL POND.<br />BIG <em>PROBLEMS.</em></h2><p>Grab a gun. Take the high ground.<br />Try not to become a cautionary tale.</p><button id="arena-start" class="arena-primary">ENTER THE ARENA <span>→</span></button><small>ONE HIT · DOUBLE JUMP · FIRST TO FIVE</small></div><div class="arena-seal">NO RESPAWNS.<br /><b>NO EXCUSES.</b><br />UNTIL NEXT ROUND.</div></div>
+      <div id="arena-state-overlay" class="arena-overlay arena-state" hidden><div><span id="arena-state-eyebrow" class="arena-eyebrow">TAKE A BREATHER</span><h2 id="arena-state-title">PAUSED.</h2><p id="arena-state-description">Even a bad duck deserves a break.</p><button id="arena-resume" class="arena-primary">RESUME MATCH</button><button id="arena-restart" class="arena-secondary">Start a new match ↻</button></div></div>
+      <div class="arena-rotate"><b>↻</b><strong>TURN YOUR PHONE.</strong><span>The trouble is wider than it looks.</span></div>
+      <div id="arena-loading" class="arena-loading">ARMING THE BADLANDS…</div>
+    </section>
+    <div class="arena-controls-legend"><span><kbd>A</kbd><kbd>D</kbd> MOVE <small>or ← →</small></span><span><kbd>SPACE</kbd> JUMP <small>tap again in air</small></span><span><kbd>J</kbd> FIRE <small>hold to shoot</small></span><span><kbd>E</kbd> EQUIP <small>pick up / swap</small></span><span><kbd>S</kbd> DROP THROUGH</span><span><kbd>ESC</kbd> PAUSE</span></div>
+    <div class="arena-field-notes"><span class="field-number">01</span><div><h3>THE RULES ARE BRUTALLY SIMPLE.</h3><p>Three weapons. Three arenas. One surviving duck. Outrun the shot, not your ammunition.</p></div><a href="./classic.html">Looking for fists? Play the classic brawler ↗</a></div>
+  </main>
+  <footer class="arena-footer"><span>DUCK FURY <small>© 2026</small></span><span>ORIGINAL WORLD. PURE ARCADE.</span><span>FEATHERS WILL FLY.</span></footer>
+  <dialog id="arena-help"><button id="arena-help-close" aria-label="Close instructions">×</button><span class="arena-eyebrow">FIELD MANUAL / ARENA</span><h2>KEEP YOUR FEATHERS.</h2><p>Play as Rook against the Dustjaw bot. One bullet ends a round. The first duck to win five rounds takes the match.</p><dl><dt>MOVE</dt><dd>A / D or ← / →. Touch: movement pad.</dd><dt>JUMP</dt><dd>Space / W / ↑ / K. Press again for a double jump.</dd><dt>FIRE</dt><dd>Hold J / Z or FIRE. Shoot in the direction you face.</dd><dt>EQUIP</dt><dd>E or EQUIP near a weapon to pick it up or swap.</dd><dt>DROP</dt><dd>S / ↓, or drag down on the pad, to drop through a raised platform.</dd><dt>PAUSE</dt><dd>Esc / P or the pause button. Leaving the tab pauses play.</dd></dl><p class="manual-tip">Weapons have limited ammo. Swap an empty gun. Rockets can kill their owner. Each new round resets weapons and changes the arena. A 45-second stalemate is a draw.</p><p class="gamepad-note">Standard gamepads / DualShock labels: left stick or D-pad move · Cross jump/double jump · Square fire · Circle equip/swap · Options pause/resume. Release held controls after reconnecting or resuming. Physical DualShock 4 + OnePlus 13 / Chrome testing is pending.</p><button id="arena-help-done" class="arena-primary">LET'S MAKE TROUBLE →</button></dialog>
+  <script type="module" src="/src/main.ts"></script>
+</body>
 </html>
