@@ -125,7 +125,7 @@ export class ShooterScene extends Phaser.Scene {
   private advanceViews(dt: number): void { for (const id of ['player','enemy'] as const) this.actors[id].advance(dt, this.world.actors[id]); }
   private handleEvent(e: ArenaEvent): void {
     if (e.type === 'next') { this.particles = []; this.rebuildStage(); this.resetViews(); return; }
-    if (e.type === 'shot') { this.effects.play(e.weapon === 'pistol' ? 'punch' : 'kick'); this.spawnParticles(e.x,e.y,6,0xffd27a,110,false); }
+    if (e.type === 'shot') { this.effects.play(e.weapon ?? 'pistol'); this.spawnParticles(e.x,e.y,6,0xffd27a,110,false); }
     if (e.type === 'impact') { this.spawnParticles(e.x,e.y,e.weapon === 'rocket' ? 24 : 7,e.weapon === 'rocket' ? 0xffb84b : 0xe6dbb5,e.weapon === 'rocket' ? 260 : 130,false); if (e.weapon === 'rocket') this.cameras.main.shake(100,.003); }
     if (e.type === 'death') { this.effects.play('hit'); this.spawnParticles(e.x,e.y,20,0xb52c38,180,true); this.cameras.main.shake(70,.002); }
   }
@@ -138,15 +138,17 @@ export class ShooterScene extends Phaser.Scene {
     const g = this.items; g.clear();
     for (const pickup of this.world.pickups) {
       const bob = Math.sin(this.world.time * 3 + pickup.id)*3, y = pickup.y-21+bob;
+      if (Math.abs(pickup.x-this.world.actors.player.x)<64 && Math.abs(pickup.y-this.world.actors.player.y)<62) g.lineStyle(2,0xffdd82,.85).strokeEllipse(pickup.x,y+4,70,40);
       g.fillStyle(pickup.kind === 'rocket' ? 0xe1b65d : 0x6dc9bb,.13).fillEllipse(pickup.x,y+9,62,17);
       drawWeapon(g,pickup.kind,pickup.x,y,1,.9); g.lineStyle(1,0xd7caa0,.45).lineBetween(pickup.x-15,y+24,pickup.x+15,y+24);
     }
     for (const a of Object.values(this.world.actors)) {
       if (a.alive && a.weapon) drawWeapon(g,a.weapon,a.x+9*a.facing-a.flash*75*a.facing,a.y-63,a.facing,1,a.flash>0);
+      if (a.id === 'enemy') this.labels.enemy.setText(this.world.botPreparing ? 'BOT · AIMING' : 'BOT ▼').setColor(this.world.botPreparing ? '#ffcf70' : '#84ede2');
       this.labels[a.id].setPosition(a.x,a.y-116).setVisible(a.alive);
     }
     for (const b of this.world.projectiles) {
-      if (b.kind === 'rocket') { g.fillStyle(0xffab53).fillCircle(b.x-Math.sign(b.vx)*9,b.y,5); g.fillStyle(0xe3e0bb).fillRect(b.x-7,b.y-3,14,6); }
+      if (b.kind === 'rocket') { g.lineStyle(7,0xd98647,.25).lineBetween(b.x,b.y,b.x-Math.sign(b.vx)*45,b.y); g.lineStyle(3,0xffd28a,.65).lineBetween(b.x,b.y,b.x-Math.sign(b.vx)*27,b.y); g.fillStyle(0xffab53).fillCircle(b.x-Math.sign(b.vx)*9,b.y,5); g.fillStyle(0xe3e0bb).fillRect(b.x-7,b.y-3,14,6); }
       else g.lineStyle(b.kind === 'shotgun'?2:3,0xffe7ac).lineBetween(b.x,b.y,b.x-Math.sign(b.vx)*19,b.y-b.vy*.015);
     }
     this.fx.clear(); for (const p of this.particles) this.fx.fillStyle(p.color,p.life/p.max).fillCircle(p.x,p.y,p.size);
@@ -157,14 +159,17 @@ export class ShooterScene extends Phaser.Scene {
     else if (phase === 'roundOver') { this.banner.setText(this.world.winner === 'player' ? 'ROOK TAKES IT.' : this.world.winner === 'enemy' ? 'DUSTJAW TAKES IT.' : 'DRAW.'); this.subBanner.setText(this.world.remaining <= 0 ? 'TIME UP · NEXT ROUND' : 'ONE HIT. ONE LESS DUCK.'); }
     const a = this.world.actors.player;
     const nearby = a.alive && this.world.pickups.find(w => w.availableAt <= this.world.time && Math.abs(w.x-a.x)<64 && Math.abs(w.y-a.y)<62);
-    text('arena-pickup-hint', this.mode === 'playing' && this.world.phase === 'playing' && nearby ? `E / EQUIP · ${WEAPONS[nearby.kind].label}` : '');
+    text('arena-pickup-hint', this.mode === 'playing' && this.world.phase === 'playing' && nearby ? `${this.controls.equipHint} · ${a.weapon ? 'SWAP' : 'EQUIP'} ${WEAPONS[nearby.kind].label} · ${nearby.ammo} SHOTS` : '');
   }
   private refreshHud(): void {
     text('arena-player-score',String(this.world.scores.player)); text('arena-enemy-score',String(this.world.scores.enemy));
     text('arena-round',`ROUND ${String(this.world.round).padStart(2,'0')}`); text('arena-timer',String(Math.ceil(this.world.remaining)).padStart(2,'0'));
     const a = this.world.actors.player;
+    const device = this.controls.device;
+    el('arena-frame').dataset.input = device;
+    text('arena-input-hint',device === 'gamepad' ? 'STICK / D-PAD MOVE · × JUMP ×2 · □ FIRE · ○ EQUIP · OPTIONS PAUSE' : device === 'touch' ? 'PAD MOVE · JUMP ×2 · HOLD FIRE · EQUIP' : 'A/D MOVE · SPACE JUMP ×2 · J FIRE · E EQUIP · ESC PAUSE');
     text('arena-weapon',a.weapon ? WEAPONS[a.weapon].label : 'EMPTY HANDED');
-    text('arena-ammo',a.weapon ? `${String(a.ammo).padStart(2,'0')} / ${WEAPONS[a.weapon].ammo}` : 'FIND A WEAPON');
+    text('arena-ammo',a.weapon ? a.ammo === 0 ? 'EMPTY · SWAP GUN' : `${String(a.ammo).padStart(2,'0')} / ${WEAPONS[a.weapon].ammo} SHOTS` : 'FIND A WEAPON');
     el('arena-weapon-card').classList.toggle('empty',!a.weapon || a.ammo === 0);
   }
   private showOverlay(eyebrow: string,title: string,description: string,button: string): void {

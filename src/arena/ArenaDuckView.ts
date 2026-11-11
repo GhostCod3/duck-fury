@@ -59,5 +59,9 @@ export function drawWeapon(g: Phaser.GameObjects.Graphics, kind: WeaponKind, x: 
   if (kind === 'pistol') { rect(-7,-7,25,12,0x171f25); rect(-6,-9,26,4,0xc1c5bb); rect(16,-6,12,6,0x63716e); rect(-5,4,8,12,0x9d6540); }
   if (kind === 'shotgun') { rect(-15,-5,48,9,0x172226); rect(0,-9,35,4,0xafb9ac); rect(4,3,21,7,0xb4773e); rect(-18,2,17,11,0x855438); }
   if (kind === 'rocket') { rect(-16,-10,50,19,0x242f29); rect(-17,-12,9,23,0xa8a866); rect(7,-12,8,23,0x8d9b56); rect(-2,9,7,10,0x11191b); rect(28,-8,11,15,0xd9bd74); }
-  if (flash) { g.fillStyle(0xffe6a0).fillTriangle(x + facing * 29 * scale,y - 10 * scale,x + facing * 55 * scale,y - 3 * scale,x + facing * 29 * scale,y + 7 * scale); }
+  if (flash) {
+    const length = kind === 'shotgun' ? 65 : kind === 'rocket' ? 44 : 52, radius = kind === 'shotgun' ? 15 : 8;
+    g.fillStyle(kind === 'rocket' ? 0xffac51 : 0xffdc82,.8).fillTriangle(x+facing*29*scale,y-radius*scale,x+facing*length*scale,y-3*scale,x+facing*29*scale,y+radius*scale);
+    g.fillStyle(0xfff3c5).fillCircle(x+facing*33*scale,y-2*scale,3*scale);
+  }
 }

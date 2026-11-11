@@ -44,6 +44,9 @@ export function segmentRect(x: number, y: number, dx: number, dy: number, r: Pla
   return lo;
 }
 
+export interface BotConfig { reactionDelay: number; routeTimeout: number }
+export const DEFAULT_BOT: Readonly<BotConfig> = { reactionDelay: .24, routeTimeout: 2.4 };
+
 export class ArenaWorld {
   actors: Record<ActorId, ArenaActor>;
   scores: Record<ActorId, number> = { player: 0, enemy: 0 };
@@ -58,14 +61,24 @@ export class ArenaWorld {
   readonly target = 5;
   private serial = 0;
   private botLedge: Platform | undefined;
-  constructor() { this.actors = { player: this.spawn('player'), enemy: this.spawn('enemy') }; this.placeWeapons(); }
+  readonly botConfig: BotConfig;
+  private botThink = 0;
+  private botTarget: { x:number; y:number } | undefined;
+  private botSight = 0;
+  private botRouteTime = 0;
+  private botAvoid = new Set<Platform>();
+  constructor(config: Partial<BotConfig> = {}) {
+    this.botConfig = { reactionDelay: clamp(config.reactionDelay ?? DEFAULT_BOT.reactionDelay,.08,1), routeTimeout:clamp(config.routeTimeout ?? DEFAULT_BOT.routeTimeout,1,5) };
+    this.actors = { player: this.spawn('player'), enemy: this.spawn('enemy') }; this.placeWeapons();
+  }
+  get botPreparing(): boolean { return this.botSight > 0 && this.botSight < this.botConfig.reactionDelay; }
   get map(): ArenaMap { return ARENAS[(this.round - 1) % ARENAS.length]; }
   private spawn(id: ActorId): ArenaActor {
     return { id, x: id === 'player' ? 170 : 1110, y: 638, vx: 0, vy: 0, facing: id === 'player' ? 1 : -1, alive: true, grounded: true, jumps: 0, coyote: .085, jumpBuffer: 0, dropTime: 0, weapon: null, ammo: 0, cooldown: 0, flash: 0, aiJump: 0 };
   }
   private placeWeapons(): void { this.pickups = this.map.weapons.map(w => ({ ...w, id: ++this.serial, ammo: WEAPONS[w.kind].ammo, availableAt: this.time })); }
   private nextRound(): void {
-    this.botLedge = undefined;
+    this.botLedge = undefined; this.botThink = 0; this.botTarget = undefined; this.botSight = 0; this.botRouteTime = 0; this.botAvoid.clear();
     this.round++; this.phase = 'countdown'; this.phaseTime = 1.4; this.remaining = 45; this.winner = null;
     this.actors = { player: this.spawn('player'), enemy: this.spawn('enemy') }; this.projectiles = []; this.placeWeapons();
   }
@@ -177,27 +190,41 @@ export class ArenaWorld {
     return this.map.platforms.some(r => { const t = segmentRect(x, y, tx - x, ty - y, r); return t !== null && t > 1e-6 && t < .999; });
   }
   private botInput(dt: number): ArenaInput {
-    const a = this.actors.enemy, target = this.actors.player; a.aiJump = Math.max(0, a.aiJump - dt);
+    const a = this.actors.enemy, player = this.actors.player; a.aiJump = Math.max(0, a.aiJump - dt);
+    this.botThink += dt;
+    if (this.botThink + 1e-9 >= this.botConfig.reactionDelay) { this.botTarget = {x:player.x,y:player.y}; this.botThink = 0; }
+    if (!this.botTarget) return NO_INPUT;
+    const target = this.botTarget;
+    if (this.botLedge) {
+      this.botRouteTime += dt;
+      if (this.botRouteTime > this.botConfig.routeTimeout) { this.botAvoid.add(this.botLedge); this.botLedge=undefined; this.botRouteTime=0; }
+    }
     let tx = target.x, ty = target.y;
     const needsWeapon = !a.weapon || a.ammo === 0;
     if (needsWeapon) {
-      const pickup = this.pickups.filter(w => w.availableAt <= this.time).sort((l, r) => Math.hypot(l.x - a.x, (l.y - a.y) * 1.4) - Math.hypot(r.x - a.x, (r.y - a.y) * 1.4))[0];
+      const pickup = this.pickups.filter(w => w.ammo > 0 && w.availableAt <= this.time).sort((l, r) => Math.hypot(l.x - a.x, (l.y - a.y) * 1.4) - Math.hypot(r.x - a.x, (r.y - a.y) * 1.4))[0];
       if (pickup) { tx = pickup.x; ty = pickup.y; }
     }
     // Keep a reachable ledge as a waypoint until landing; an apex must not erase the route.
-    if (this.botLedge && a.grounded && Math.abs(a.y - this.botLedge.y) < 1) this.botLedge = undefined;
+    if (this.botLedge && a.grounded && Math.abs(a.y - this.botLedge.y) < 1) { this.botLedge = undefined; this.botRouteTime=0; }
     if (!this.botLedge && a.grounded && ty < a.y - 65) {
-      this.botLedge = this.map.platforms.filter(p => p.y < a.y - 40 && p.y >= a.y - 225)
+      this.botLedge = this.map.platforms.filter(p => !this.botAvoid.has(p) && p.y < a.y - 40 && p.y >= a.y - 225)
         .sort((l, r) => Math.abs(clamp(a.x, l.x + 32, l.x + l.w - 32) - a.x) + Math.abs(l.y - ty) * .6 - Math.abs(clamp(a.x, r.x + 32, r.x + r.w - 32) - a.x) - Math.abs(r.y - ty) * .6)[0];
     }
     if (this.botLedge) { tx = clamp(a.x, this.botLedge.x + 32, this.botLedge.x + this.botLedge.w - 32); ty = this.botLedge.y; }
     const dx = tx - a.x, aligned = Math.abs(target.y - a.y) < 45;
     let move = Math.abs(dx) > (needsWeapon || this.botLedge ? 16 : 150) ? Math.sign(dx) : 0;
     if (!needsWeapon && aligned) { a.facing = target.x >= a.x ? 1 : -1; if (Math.abs(dx) < 95) move = -Math.sign(dx); }
-    const jump = ty < a.y - (a.grounded ? 55 : 8) && Math.abs(dx) < 235 && a.aiJump <= 0 && (a.grounded || (a.jumps === 1 && a.vy > -130));
+    const jump = ty >= a.y - 225 && ty < a.y - (a.grounded ? 55 : 8) && Math.abs(dx) < 235 && a.aiJump <= 0 && (a.grounded || (a.jumps === 1 && a.vy > -130));
     if (jump) a.aiJump = .15;
+    const facing = target.x >= a.x ? 1 : -1;
+    const range = a.weapon ? WEAPONS[a.weapon].speed * WEAPONS[a.weapon].life : 0;
+    const safeShot = !needsWeapon && aligned && Math.abs(target.x-a.x) > (a.weapon === 'rocket' ? 145 : 65) && Math.abs(target.x-a.x) < range*.9
+      && Math.abs(player.y-a.y)<45 && (player.x-a.x)*facing>0
+      && !this.occluded(a.x+facing*33,a.y-64,player.x,player.y-64);
+    this.botSight = safeShot ? this.botSight+dt : 0;
     return { move, jump, aim: !needsWeapon ? (target.x >= a.x ? 1 : -1) : undefined, pickup: needsWeapon, drop: ty > a.y + 110 && a.grounded,
-      fire: !needsWeapon && aligned && Math.abs(target.x - a.x) > 48 && !this.occluded(a.x + a.facing * 33, a.y - 64, target.x, target.y - 64) };
+      fire: safeShot && this.botSight + 1e-9 >= this.botConfig.reactionDelay };
   }
 }
 

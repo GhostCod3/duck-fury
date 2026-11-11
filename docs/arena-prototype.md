@@ -1,5 +1,7 @@
 # Last Duck Standing — arena prototype
 
+The focused follow-up is documented in [gameplay polish](gameplay-polish.md), including updated controller support and verification. Browser restrictions below describe the original session; local Chromium works in the polish session.
+
 The default game is now a platform arena shooter inspired by the short, one-hit rounds and weapon scavenging of Duck Game. DUCK FURY keeps its original warrior-duck artwork, scarf animation and painted wasteland. No Duck Game assets or level layouts are included.
 
 ## Play

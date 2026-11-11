@@ -85,3 +85,39 @@ test('production arena assets and classic entry load, and missing rig parts reta
   await ready(fallback);await fallback.locator('#arena-start').click();await fallback.waitForFunction(()=>(window as any).__duckArena.snapshot().phase==='playing');
   await fallback.keyboard.press('e');await fallback.waitForFunction(()=>(window as any).__duckArena.snapshot().actors.player.weapon==='pistol');expect(errors).toEqual([]);await context.close();
 });
+
+test('standard gamepad combines movement, Cross and Square; Circle, Options and disconnect reset correctly',async({page})=>{
+  await page.addInitScript(()=>{
+    (window as any).__pad={axes:[0,0],buttons:[],connected:true};
+    Object.defineProperty(navigator,'getGamepads',{value:()=>{const p=(window as any).__pad;return p.connected?[{index:0,mapping:'standard',connected:true,axes:p.axes,buttons:Array.from({length:17},(_,i)=>({pressed:p.buttons.includes(i),value:Number(p.buttons.includes(i))}))}]:[];}});
+  });
+  const pad=async(buttons:number[]=[],axes=[0,0])=>{await page.evaluate(({buttons,axes})=>Object.assign((window as any).__pad,{buttons,axes}),{buttons,axes});await page.waitForTimeout(70);};
+  await ready(page);await page.setViewportSize({width:915,height:412});await setup(page,'platform');await pad();const before=await state(page);
+  await pad([0,2,15]);const active=await state(page);expect(active.actors.player.x).toBeGreaterThan(before.actors.player.x);expect(active.actors.player.y).toBeLessThan(before.actors.player.y);expect(active.actors.player.ammo).toBe(8);
+  await expect(page.locator('#arena-input-hint')).toContainText('OPTIONS');
+  await pad([0,15]);expect((await state(page)).actors.player.jumps).toBe(1);await pad();await pad([0]);expect((await state(page)).actors.player.jumps).toBe(2);
+  await pad();await pad([9]);expect((await state(page)).mode).toBe('paused');await page.waitForTimeout(100);expect((await state(page)).mode).toBe('paused');
+  await pad();await pad([9]);expect((await state(page)).mode).toBe('playing');await pad();
+  await setup(page,'platform');await pad();await pad([],[-1,0]);expect((await state(page)).actors.player.x).toBeLessThan(280);await pad();
+  await pad([2,15]);await page.evaluate(()=>{(window as any).__pad.connected=false;window.dispatchEvent(new Event('gamepaddisconnected'));});expect((await state(page)).mode).toBe('paused');
+  await page.evaluate(()=>(window as any).__pad.connected=true);await page.locator('#arena-resume').click();await page.waitForTimeout(250);const reset=await state(page);await page.waitForTimeout(140);expect((await state(page)).actors.player.x).toBe(reset.actors.player.x);expect((await state(page)).actors.player.ammo).toBe(reset.actors.player.ammo);
+  await pad();await setup(page);await pad();
+  // Normal countdown spawn has a pistol within the equip radius.
+  await page.locator('#arena-restart').evaluate((e:HTMLElement)=>e.click());await page.waitForFunction(()=>(window as any).__duckArena.snapshot().phase==='playing');await pad([1]);expect((await state(page)).actors.player.weapon).toBe('pistol');
+  await pad();await pad([15]);await pad();await capture(page,'after-arena-gamepad-landscape');
+});
+
+test('ordinary landscape encounters play through all three layouts and expose readable pickup and empty ammo',async({browser})=>{
+  const context=await browser.newContext({viewport:{width:915,height:412},hasTouch:true,isMobile:true,recordVideo:{dir:'qa-captures/normal-play'}});const page=await context.newPage();
+  await ready(page);await page.locator('#arena-start').tap();
+  for(let round=1;round<=3;round++){
+    await page.waitForFunction(r=>{const s=(window as any).__duckArena.snapshot();return s.round===r&&s.phase==='playing';},round);
+    await expect(page.locator('#arena-pickup-hint')).toContainText('9 SHOTS');
+    if(round===1)await capture(page,'after-arena-pickup-landscape');
+    await page.keyboard.press('e');await page.keyboard.down('j');await page.keyboard.press('Space');await page.waitForTimeout(120);
+    expect((await state(page)).actors.player.weapon).toBe('pistol');await capture(page,`after-arena-normal-layout-${round}`);await page.keyboard.up('j');
+    await page.waitForFunction(r=>{const s=(window as any).__duckArena.snapshot();return s.round>r||s.phase==='roundOver';},round);
+  }
+  await setup(page,'platform');await page.keyboard.down('j');await page.waitForFunction(()=>(window as any).__duckArena.snapshot().actors.player.ammo===0);await page.keyboard.up('j');
+  await expect(page.locator('#arena-ammo')).toHaveText('EMPTY · SWAP GUN');await capture(page,'after-arena-empty-landscape');await context.close();
+});

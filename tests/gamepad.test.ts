@@ -1,0 +1,9 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { StandardGamepad } from '../src/arena/StandardGamepad.ts';
+const pad = (buttons:number[]=[],x=0,y=0,index=0) => ({index,mapping:'standard',connected:true,axes:[x,y],buttons:Array.from({length:17},(_,i)=>({pressed:buttons.includes(i),value:Number(buttons.includes(i))}))}) as Gamepad;
+const ready = () => {const p=new StandardGamepad();p.read([pad()]);return p;};
+test('standard stick dead zone, analog range and D-pad priority',()=>{const p=ready();assert.equal(p.read([pad([],.19)]).move,0);assert.ok(Math.abs(p.read([pad([],.6)]).move-.5)<1e-9);assert.equal(p.read([pad([14],1)]).move,-1);assert.equal(p.read([pad([15])]).move,1);assert.equal(p.read([pad([14,15])]).move,0);assert.equal(p.read([pad([13])]).drop,true);});
+test('Cross jump, Circle equip and Options are edges; Square fires while moving and jumping',()=>{const p=ready();const first=p.read([pad([0,1,2,9,15])]);assert.deepEqual([first.move,first.jump,first.pickup,first.fire,first.pause],[1,true,true,true,true]);const held=p.read([pad([0,1,2,9,15])]);assert.deepEqual([held.jump,held.pickup,held.fire,held.pause],[false,false,true,false]);p.read([pad()]);assert.equal(p.read([pad([0])]).jump,true);});
+test('disconnect and resets suppress held actions and stick until released',()=>{const p=ready();p.read([pad([0,2],1)]);p.reset();let s=p.read([pad([0,2],1)]);assert.deepEqual([s.jump,s.fire,s.move],[false,false,0]);p.read([pad()]);assert.equal(p.read([pad([2],1)]).fire,true);assert.equal(p.read([]).connected,false);s=p.read([pad([0,2],1)]);assert.deepEqual([s.jump,s.fire,s.move],[false,false,0]);p.read([pad()]);assert.equal(p.read([pad([0])]).jump,true);});
+test('unmapped devices ignored and replacement controller must release held input',()=>{const p=ready();assert.equal(p.read([{...pad(),mapping:''}]).connected,false);p.read([pad()]);assert.equal(p.read([pad([2],0,0,1)]).fire,false);});

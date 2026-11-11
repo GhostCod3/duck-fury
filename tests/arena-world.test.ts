@@ -112,3 +112,35 @@ test('a quick fire tap survives a zero-tick frame and held fire continues across
   clock.advance(.001,{...NO_INPUT,fire:true},()=>{});clock.reset();
   clock.advance(.01,NO_INPUT,(_dt,input)=>assert.equal(input.fire,false));
 });
+
+test('bot reaction is configurable, delayed and deterministic, and a dodge cancels the shot',()=>{
+  const make=(delay:number)=>{const w=new ArenaWorld({reactionDelay:delay});w.phase='playing';Object.assign(w.actors.enemy,{x:760,weapon:'pistol',ammo:9});w.actors.player.x=480;return w;};
+  const slow=make(.4), fast=make(.1);let slowShot=0,fastShot=0;
+  for(let n=0;n<120;n++){if(slow.step(tick,NO_INPUT).some(e=>e.type==='shot')&&!slowShot)slowShot=n+1;if(fast.step(tick,NO_INPUT).some(e=>e.type==='shot')&&!fastShot)fastShot=n+1;}
+  assert.ok(slowShot>=90);assert.ok(fastShot>0&&fastShot<slowShot);
+  const dodge=make(.3);for(let n=0;n<60;n++)dodge.step(tick,NO_INPUT);Object.assign(dodge.actors.player,{y:328,vy:0});
+  assert.equal(dodge.step(tick,NO_INPUT).some(e=>e.type==='shot'),false);
+  const a=make(.24),b=make(.24);for(let n=0;n<700;n++){const input={...NO_INPUT,move:Math.sin(n/90),jump:n%83===0};assert.deepEqual(a.step(tick,input),b.step(tick,input));}assert.deepEqual(a.actors,b.actors);
+});
+test('bot navigates every layout to the upper player with bounded jumps and finite ammunition',()=>{
+  for(let layout=0;layout<3;layout++){
+    const w=new ArenaWorld();w.round=layout+1;w.phase='playing';const top=w.map.platforms.reduce((a,b)=>a.y<b.y?a:b);
+    Object.assign(w.actors.player,{x:top.x+top.w/2,y:top.y,grounded:true});Object.assign(w.actors.enemy,{weapon:'pistol',ammo:9});
+    let reached=false,jumps=0,shots=0;for(let n=0;n<120*18&&w.phase==='playing';n++){const before=w.actors.enemy.jumps;const events=w.step(tick,NO_INPUT);jumps+=Number(w.actors.enemy.jumps>before);shots+=events.filter(e=>e.type==='shot'&&e.actor==='enemy').length;reached ||= w.actors.enemy.y<=top.y+10;}
+    assert.ok(reached,`layout ${layout} should be reachable`);assert.ok(jumps<25);assert.ok(shots<=9);assert.equal(w.actors.player.alive,false);
+  }
+});
+test('bot ignores empty pickups, does not endlessly swap a loaded weapon or fire through a platform',()=>{
+ const w=live();w.pickups=[{id:99,x:1110,y:638,kind:'rocket',ammo:0,availableAt:0}];advance(w,1,NO_INPUT,undefined);assert.equal(w.actors.enemy.weapon,null);
+ const armed=live();Object.assign(armed.actors.enemy,{x:640,y:638,weapon:'pistol',ammo:9});Object.assign(armed.actors.player,{x:640,y:328});
+ armed.pickups=[{id:99,x:640,y:638,kind:'shotgun',ammo:4,availableAt:0}];
+ for(let n=0;n<20;n++)armed.step(tick,NO_INPUT);assert.equal(armed.actors.enemy.ammo,9);assert.equal(armed.actors.enemy.weapon,'pistol');assert.equal(armed.pickups.length,1);
+});
+
+test('an unreachable high target does not cause endless jump attempts',()=>{
+  const w=live();Object.assign(w.actors.enemy,{weapon:'pistol',ammo:9});let jumps=0;
+  for(let n=0;n<120*15;n++){
+    Object.assign(w.actors.player,{x:640,y:-400,vy:0,grounded:false});const before=w.actors.enemy.jumps;w.step(tick,NO_INPUT);jumps+=Number(w.actors.enemy.jumps>before);
+  }
+  assert.ok(jumps<12,`bounded route attempts, got ${jumps}`);assert.equal(w.actors.enemy.ammo,9);
+});

@@ -2,7 +2,7 @@
 
 The default entry is now an original, one-hit platform arena shooter: one player versus a bot, three arenas, three collectible weapons, double jumping and first-to-five rounds. The original segmented warrior artwork and painted wasteland are reused.
 
-Run with Node.js 24: `npm install`, `npm run dev`, `npm test`, `npm run build`. Move with A/D or arrows, jump with Space, hold J to shoot, and press E near a weapon to equip/swap. Landscape touch controls are built in. [Arena implementation and verification](docs/arena-prototype.md).
+Run with Node.js 24: `npm install`, `npm run dev`, `npm test`, `npm run build`. Move with A/D or arrows, jump with Space, hold J to shoot, and press E near a weapon to equip/swap. Landscape touch controls are built in. [Arena implementation and verification](docs/arena-prototype.md). [Gameplay polish, controller mapping and hardware checklist](docs/gameplay-polish.md).
 
 The previous brawler remains available at [`classic.html`](classic.html). The documentation below describes that preserved mode.
 
